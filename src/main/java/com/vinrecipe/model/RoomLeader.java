@@ -1,4 +1,4 @@
-package com.recipeapp;
+package com.vinrecipe.model;
 
 public class RoomLeader extends User {
     private int roomId;

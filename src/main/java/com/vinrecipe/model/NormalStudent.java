@@ -1,4 +1,4 @@
-package com.recipeapp;
+package com.vinrecipe.model;
 
 public class NormalStudent extends User {
     private int roomId;

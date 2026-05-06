@@ -1,4 +1,4 @@
-package com.recipeapp;
+package com.vinrecipe.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
