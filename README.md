@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🍽️ VinRECIPE — Smart Recipe & Grocery Planner
 
 **Group 13 | COMP1020 Object-Oriented Programming | VinUniversity**
@@ -154,3 +155,6 @@ copy .env.example .env
 ---
 
 *Built with Java 17 · JavaFX 21 · MySQL 8 · Aiven Cloud*
+=======
+# Term-project
+>>>>>>> b0f37c551070ff5bdc31bf72d9268deb60f159a3

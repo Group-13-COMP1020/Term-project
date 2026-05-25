@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 -- ================================================================
 -- VinRECIPE — Database Schema (MySQL 8.x compatible with Aiven defaultdb)
 -- Run this script once to set up the database.
@@ -44,10 +45,42 @@ CREATE TABLE IF NOT EXISTS tags (
 -- RECIPES
 -- ================================================================
 CREATE TABLE IF NOT EXISTS recipes (
+=======
+-- ========== USERS ==========
+CREATE TABLE users (
+    user_id     INT AUTO_INCREMENT PRIMARY KEY,
+    username    VARCHAR(50)  NOT NULL UNIQUE,
+    password    VARCHAR(255) NOT NULL,
+    email       VARCHAR(100) NOT NULL UNIQUE,
+    role        ENUM('ADMIN', 'NORMAL_STUDENT', 'ROOM_LEADER') NOT NULL DEFAULT 'NORMAL_STUDENT',
+    room_id     INT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ========== ROOMS ==========
+CREATE TABLE rooms (
+    room_id     INT AUTO_INCREMENT PRIMARY KEY,
+    room_name   VARCHAR(100) NOT NULL,
+    leader_id   INT,
+    FOREIGN KEY (leader_id) REFERENCES users(user_id)
+);
+
+ALTER TABLE users ADD FOREIGN KEY (room_id) REFERENCES rooms(room_id);
+
+-- ========== TAGS ==========
+CREATE TABLE tags (
+    tag_id   INT AUTO_INCREMENT PRIMARY KEY,
+    name     VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- ========== RECIPES ==========
+CREATE TABLE recipes (
+>>>>>>> b0f37c551070ff5bdc31bf72d9268deb60f159a3
     recipe_id    INT AUTO_INCREMENT PRIMARY KEY,
     title        VARCHAR(200) NOT NULL,
     description  TEXT,
     instructions TEXT,
+<<<<<<< HEAD
     prep_time    INT DEFAULT 0 COMMENT 'minutes',
     cook_time    INT DEFAULT 0 COMMENT 'minutes',
     rating       DECIMAL(2,1) DEFAULT 0.0,
@@ -77,11 +110,38 @@ CREATE TABLE IF NOT EXISTS ingredients (
 CREATE TABLE IF NOT EXISTS recipe_tags (
     recipe_id INT NOT NULL,
     tag_id    INT NOT NULL,
+=======
+    prep_time    INT,          -- in minutes
+    cook_time    INT,          -- in minutes
+    rating       DECIMAL(2,1) DEFAULT 0.0,
+    servings     INT DEFAULT 1,
+    author_id    INT,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(user_id)
+);
+
+-- ========== INGREDIENTS ==========
+CREATE TABLE ingredients (
+    ingredient_id  INT AUTO_INCREMENT PRIMARY KEY,
+    recipe_id      INT NOT NULL,
+    name           VARCHAR(100) NOT NULL,
+    quantity       DECIMAL(10,2),
+    unit           VARCHAR(30),
+    price_estimate DECIMAL(10,2),
+    FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE
+);
+
+-- ========== RECIPE ↔ TAG (many-to-many) ==========
+CREATE TABLE recipe_tags (
+    recipe_id  INT,
+    tag_id     INT,
+>>>>>>> b0f37c551070ff5bdc31bf72d9268deb60f159a3
     PRIMARY KEY (recipe_id, tag_id),
     FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE,
     FOREIGN KEY (tag_id)    REFERENCES tags(tag_id) ON DELETE CASCADE
 );
 
+<<<<<<< HEAD
 -- ================================================================
 -- SHOPPING LISTS
 -- ================================================================
@@ -95,10 +155,24 @@ CREATE TABLE IF NOT EXISTS shopping_lists (
 CREATE TABLE IF NOT EXISTS shopping_list_recipes (
     list_id   INT NOT NULL,
     recipe_id INT NOT NULL,
+=======
+-- ========== SHOPPING LISTS ==========
+CREATE TABLE shopping_lists (
+    list_id     INT AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT NOT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE shopping_list_recipes (
+    list_id   INT,
+    recipe_id INT,
+>>>>>>> b0f37c551070ff5bdc31bf72d9268deb60f159a3
     PRIMARY KEY (list_id, recipe_id),
     FOREIGN KEY (list_id)   REFERENCES shopping_lists(list_id) ON DELETE CASCADE,
     FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE
 );
+<<<<<<< HEAD
 
 -- ================================================================
 -- SEED DATA (demo accounts & recipes)
@@ -201,3 +275,5 @@ INSERT IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES
     (3, 2), (3, 7),   -- Salad: Lunch, Healthy
     (4, 3), (4, 9),   -- Mì Xào: Dinner, Asian
     (5, 1), (5, 6);   -- Bánh Mì: Breakfast, Quick
+=======
+>>>>>>> b0f37c551070ff5bdc31bf72d9268deb60f159a3

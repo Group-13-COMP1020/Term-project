@@ -1,5 +1,6 @@
 package com.vinrecipe.model;
 
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,9 @@ import java.util.List;
  */
 public class RoomLeader extends User {
 
+=======
+public class RoomLeader extends User {
+>>>>>>> b0f37c551070ff5bdc31bf72d9268deb60f159a3
     private int roomId;
 
     public RoomLeader() {
@@ -21,6 +25,7 @@ public class RoomLeader extends User {
         this.roomId = roomId;
     }
 
+<<<<<<< HEAD
     /** RoomLeaders have permission level 2. — Polymorphism */
     @Override
     public int getPermissionLevel() {
@@ -43,5 +48,27 @@ public class RoomLeader extends User {
     public void setRoomId(int roomId) {
         if (roomId < 0) throw new IllegalArgumentException("roomId must be non-negative");
         this.roomId = roomId;
+=======
+    @Override
+    public int getPermissionLevel() {
+        return 2; // Mid-level permission
+    }
+
+    public void manageRoom() {
+        System.out.println("RoomLeader " + getUsername() + " is managing room ID: " + roomId);
+    }
+
+    public void assignMembers() {
+        System.out.println("RoomLeader " + getUsername() + " is assigning members to room ID: " + roomId);
+    }
+
+    // Getters and Setters
+    public int getRoomId() { return roomId; }
+    public void setRoomId(int roomId) { this.roomId = roomId; }
+
+    @Override
+    public String toString() {
+        return "RoomLeader{userId=" + getUserId() + ", username='" + getUsername() + "', roomId=" + roomId + "}";
+>>>>>>> b0f37c551070ff5bdc31bf72d9268deb60f159a3
     }
 }
