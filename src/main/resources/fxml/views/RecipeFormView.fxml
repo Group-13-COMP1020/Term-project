@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.cell.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.vinrecipe.controller.RecipeFormController"
+      spacing="16"
+      style="-fx-background-color: #FAFAFA;">
+
+    <padding><Insets top="20" bottom="20" left="24" right="24"/></padding>
+
+    <!-- Header Action Bar -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label fx:id="formTitleLabel" text="Add New Recipe ✨" style="-fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
+            <Label text="Share your culinary creations with your dormmates." style="-fx-font-size: 12px; -fx-text-fill: #718096;"/>
+        </VBox>
+        <Button text="✕ Cancel" onAction="#handleCancel"
+                style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8 18; -fx-font-weight: bold; -fx-text-fill: #475569; -fx-cursor: hand;"/>
+        <Button text="✓ Save Recipe" onAction="#handleSave"
+                style="-fx-background-color: #E76F51; -fx-background-radius: 20px; -fx-padding: 8 22; -fx-font-weight: bold; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(231,111,81,0.15), 6, 0, 0, 2);"/>
+    </HBox>
+
+    <Separator style="-fx-opacity: 0.3;"/>
+
+    <Label fx:id="statusLabel" styleClass="status-label" wrapText="true" style="-fx-text-fill: #E76F51; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+        <VBox spacing="20">
+            <padding><Insets top="4" bottom="16" left="4" right="4"/></padding>
+
+            <!-- CARD 1: Basic Information -->
+            <VBox spacing="14" style="-fx-background-color: #FFFFFF; -fx-background-radius: 14px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);">
+                <Label text="Basic Information 📝" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+                
+                <GridPane hgap="16" vgap="14">
+                    <columnConstraints>
+                        <ColumnConstraints prefWidth="130"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <ColumnConstraints prefWidth="130"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <!-- Recipe Title -->
+                    <Label text="Recipe Title *" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <TextField fx:id="titleField" promptText="Enter the name of your dish..."
+                               style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
+                               GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="3"/>
+
+                    <!-- Prep Time -->
+                    <Label text="Prep Time (min) *" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <TextField fx:id="prepTimeField" promptText="e.g. 15"
+                               style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
+                               GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                    <!-- Cook Time -->
+                    <Label text="Cook Time (min) *" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                    <TextField fx:id="cookTimeField" promptText="e.g. 30"
+                               style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
+                               GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+
+                    <!-- Servings -->
+                    <Label text="Servings *" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <TextField fx:id="servingsField" promptText="e.g. 2"
+                               style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
+                               GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                    <!-- Image URL -->
+                    <Label text="Image URL (optional)" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                    <TextField fx:id="imageUrlField" promptText="e.g. /images/beef_pho.png or web link"
+                               style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
+                               GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                </GridPane>
+            </VBox>
+
+            <!-- CARD 2: Recipe Details -->
+            <VBox spacing="14" style="-fx-background-color: #FFFFFF; -fx-background-radius: 14px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);">
+                <Label text="Recipe Details 🍳" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+
+                <VBox spacing="6">
+                    <Label text="Brief Description" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;"/>
+                    <TextArea fx:id="descriptionArea" promptText="Describe what makes your dish delicious..."
+                              prefHeight="80" wrapText="true"
+                              style="-fx-background-color: #F8FAFC; -fx-text-area-background: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 6 8; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text="Step-by-Step Instructions" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;"/>
+                    <TextArea fx:id="instructionsArea" promptText="1. Prepare ingredients...&#10;2. Heat the pan..."
+                              prefHeight="120" wrapText="true"
+                              style="-fx-background-color: #F8FAFC; -fx-text-area-background: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 6 8; -fx-font-size: 13px;"/>
+                </VBox>
+            </VBox>
+
+            <!-- CARD 3: Ingredients section -->
+            <VBox spacing="14" style="-fx-background-color: #FFFFFF; -fx-background-radius: 14px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);">
+                <Label text="Ingredients List 🥕" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+
+                <!-- Sleek horizontal inline input row -->
+                <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-background-color: #F8FAFC; -fx-background-radius: 10px; -fx-padding: 8 12; -fx-border-color: #E2E8F0; -fx-border-radius: 10px;">
+                    <TextField fx:id="ingNameField" promptText="Ingredient Name" HBox.hgrow="ALWAYS"
+                               style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6 10; -fx-font-size: 12px;"/>
+                    <TextField fx:id="ingQtyField" promptText="Qty" prefWidth="60"
+                               style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6 10; -fx-font-size: 12px;"/>
+                    <TextField fx:id="ingUnitField" promptText="Unit" prefWidth="60"
+                               style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6 10; -fx-font-size: 12px;"/>
+                    <TextField fx:id="ingPriceField" promptText="Price (VND)" prefWidth="100"
+                               style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6 10; -fx-font-size: 12px;"/>
+                    
+                    <Button text="＋ Add Item" onAction="#handleAddIngredient"
+                            style="-fx-background-color: #E76F51; -fx-background-radius: 6px; -fx-padding: 6 14; -fx-font-weight: bold; -fx-text-fill: white; -fx-cursor: hand;"/>
+                    <Button text="✕ Remove" onAction="#handleRemoveIngredient"
+                            style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6 12; -fx-font-weight: bold; -fx-text-fill: #64748B; -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- Ingredients table -->
+                <TableView fx:id="ingredientTable" prefHeight="160"
+                           style="-fx-background-color: #FFFFFF; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4;">
+                    <columns>
+                        <TableColumn fx:id="ingNameCol" text="Name" prefWidth="180"/>
+                        <TableColumn fx:id="ingQtyCol" text="Quantity" prefWidth="90"/>
+                        <TableColumn fx:id="ingUnitCol" text="Unit" prefWidth="90"/>
+                        <TableColumn fx:id="ingPriceCol" text="Price (VND)" prefWidth="120"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No ingredients added yet. Use the bar above to add!" style="-fx-text-fill: #94A3B8; -fx-font-size: 12px;"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+            <!-- CARD 4: Tags & Classification -->
+            <VBox spacing="14" style="-fx-background-color: #FFFFFF; -fx-background-radius: 14px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);">
+                <Label text="Tags &amp; Classification 🏷" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+                
+                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #F8FAFC; -fx-background-radius: 10px; -fx-padding: 8 12; -fx-border-color: #E2E8F0; -fx-border-radius: 10px;">
+                    <ComboBox fx:id="tagCombo" promptText="Select a category tag..." HBox.hgrow="ALWAYS" prefWidth="250"
+                              style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 3 6; -fx-cursor: hand;"/>
+                    <Button text="＋ Add Tag" onAction="#handleAddTag"
+                            style="-fx-background-color: #E76F51; -fx-background-radius: 6px; -fx-padding: 6 14; -fx-font-weight: bold; -fx-text-fill: white; -fx-cursor: hand;"/>
+                    <Button text="✕ Remove Tag" onAction="#handleRemoveTag"
+                            style="-fx-background-color: #FFFFFF; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 6 12; -fx-font-weight: bold; -fx-text-fill: #64748B; -fx-cursor: hand;"/>
+                </HBox>
+
+                <ListView fx:id="selectedTagsList" prefHeight="80"
+                          style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px;"/>
+            </VBox>
+
+        </VBox>
+    </ScrollPane>
+
+</VBox>

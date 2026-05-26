@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.vinrecipe.controller.ShoppingListController"
+      styleClass="view-root" spacing="20"
+      style="-fx-background-color: #FAFAFA;">
+
+    <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
+
+    <!-- Header Row -->
+    <HBox alignment="CENTER_LEFT" spacing="16">
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Shopping Lists" styleClass="page-title" style="-fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
+            <Label text="Plan your groceries more simply. Select recipes, and we'll do the math." styleClass="page-subtitle" style="-fx-font-size: 13px; -fx-text-fill: #7F8C8D;"/>
+        </VBox>
+        <Button text="✚ New List" onAction="#handleClear" styleClass="btn-primary" style="-fx-background-color: #E76F51; -fx-background-radius: 20px; -fx-padding: 8 20; -fx-font-weight: bold; -fx-cursor: hand; -fx-text-fill: white;"/>
+    </HBox>
+
+    <Separator style="-fx-opacity: 0.4;"/>
+
+    <!-- Main Workspace: Left column (Recipes) + Right column (List details) -->
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        
+        <!-- Left Panel: Recipe Card Selections -->
+        <VBox spacing="10" prefWidth="320" minWidth="320" maxWidth="320">
+            <Label text="Select Recipes" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #4A5568;"/>
+            <ListView fx:id="recipeListView" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent; -fx-padding: 0;"/>
+        </VBox>
+        
+        <!-- Right Panel: Active Shopping List Card Details -->
+        <VBox spacing="14" HBox.hgrow="ALWAYS" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);">
+            
+            <!-- List Details Header -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <VBox spacing="2" HBox.hgrow="ALWAYS">
+                    <Label fx:id="instructionLabel" text="Room Groceries List" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
+                    <Label fx:id="totalPriceLabel" text="Estimated total: 0 VND" style="-fx-font-size: 12px; -fx-text-fill: #7F8C8D; -fx-font-weight: 500;"/>
+                </VBox>
+                <Button text="✚ Add item" onAction="#handleAddItem" style="-fx-background-color: #FFF2E6; -fx-text-fill: #E76F51; -fx-font-size: 12px; -fx-font-weight: bold; -fx-border-color: #FFE0CC; -fx-border-radius: 16px; -fx-background-radius: 16px; -fx-padding: 6 14; -fx-cursor: hand;"/>
+                <Button text="Clear" onAction="#handleClear" style="-fx-background-color: transparent; -fx-text-fill: #718096; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 6;"/>
+            </HBox>
+            
+            <Separator style="-fx-opacity: 0.3;"/>
+            
+            <!-- Dopamine Progress indicator section -->
+            <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #FAFAFA; -fx-background-radius: 10px; -fx-padding: 8 12;">
+                <ProgressBar fx:id="completionProgress" progress="0.0" prefWidth="180" style="-fx-accent: #E76F51; -fx-pref-height: 8px;"/>
+                <Label fx:id="motivationLabel" text="Select recipes to start! 🍳" style="-fx-font-size: 12px; -fx-text-fill: #E76F51; -fx-font-weight: bold;"/>
+            </HBox>
+            
+            <!-- Shopping List Items Scroll -->
+            <ListView fx:id="shoppingListView" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent; -fx-padding: 0;"/>
+            
+            <!-- Smart Recommendations Panel -->
+            <VBox spacing="6" fx:id="suggestionBox">
+                <Label text="💡 Smart recommendation: shared ingredients you have in selection" style="-fx-font-weight: bold; -fx-text-fill: #E76F51; -fx-font-size: 12px;"/>
+                <HBox fx:id="suggestionPane" spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 2 0 0 0;"/>
+            </VBox>
+            
+        </VBox>
+        
+    </HBox>
+
+</VBox>

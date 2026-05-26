@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.vinrecipe.controller.MainController"
+            fx:id="mainPane"
+            styleClass="main-layout"
+            prefWidth="1100" prefHeight="700">
+
+    <!-- ===== TOP HEADER BAR ===== -->
+    <top>
+        <HBox styleClass="top-header" alignment="CENTER_LEFT" spacing="16" prefHeight="64">
+            <padding><Insets left="24" right="24" top="0" bottom="0"/></padding>
+            
+            <!-- Brand Logo -->
+            <Label text="VinRECIPE" styleClass="header-brand"/>
+            
+            <Region HBox.hgrow="ALWAYS"/>
+            
+            <!-- Search & Filter Bar -->
+            <HBox styleClass="header-search-container" alignment="CENTER_LEFT" spacing="8" prefWidth="480">
+                <padding><Insets left="14" right="14"/></padding>
+                <Label text="🔍" style="-fx-text-fill: #A0AEC0; -fx-font-size: 14px;"/>
+                <TextField fx:id="topSearchField" promptText="Search recipe, ingredients or meal ideas..." styleClass="header-search-field" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            
+            <Button text="Filter" styleClass="header-filter-btn" onAction="#showRecipes">
+                <graphic>
+                    <Label text="⛛" style="-fx-font-size: 12px; -fx-text-fill: #E76F51; -fx-font-weight: bold;"/>
+                </graphic>
+            </Button>
+            
+            <Region HBox.hgrow="ALWAYS"/>
+            
+            <!-- Profile Initials Circle -->
+            <StackPane fx:id="profileCirclePane" styleClass="profile-circle" onMouseClicked="#handleProfileClick" style="-fx-cursor: hand;">
+                <Label fx:id="profileCircleLabel" text="NN" styleClass="profile-initials"/>
+            </StackPane>
+        </HBox>
+    </top>
+
+    <!-- ===== LEFT SIDEBAR ===== -->
+    <left>
+        <VBox styleClass="sidebar" spacing="6" prefWidth="220">
+            <padding><Insets top="16" bottom="16" left="16" right="16"/></padding>
+
+            <!-- Navigation Buttons -->
+            <VBox spacing="6" styleClass="sidebar-nav" VBox.vgrow="ALWAYS">
+                <Button text="⛃  Dashboard" styleClass="nav-btn, nav-btn-active"
+                        maxWidth="Infinity" onAction="#showRecipes"
+                        fx:id="dashboardBtn"/>
+
+                <Button text="👤  My Room" styleClass="nav-btn"
+                        maxWidth="Infinity" onAction="#showRoom"
+                        fx:id="roomBtn"/>
+
+                <Button text="🛒  Shopping Lists" styleClass="nav-btn"
+                        maxWidth="Infinity" onAction="#showShoppingList"
+                        fx:id="shoppingBtn"/>
+            </VBox>
+
+            <Separator styleClass="sidebar-separator" style="-fx-padding: 8 0 8 0;"/>
+
+            <!-- Footer version info -->
+            <Label text="VinRECIPE v1.0" styleClass="sidebar-footer"
+                   alignment="CENTER" maxWidth="Infinity"/>
+        </VBox>
+    </left>
+
+    <!-- ===== CENTER CONTENT AREA ===== -->
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area">
+            <Label text="Loading..." styleClass="placeholder-label"/>
+        </StackPane>
+    </center>
+
+</BorderPane>

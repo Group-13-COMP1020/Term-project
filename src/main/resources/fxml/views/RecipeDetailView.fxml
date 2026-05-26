@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.vinrecipe.controller.RecipeDetailController"
+      styleClass="view-root" spacing="20"
+      style="-fx-background-color: #FAFAFA;">
+
+    <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
+
+    <!-- Header navigation bar -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Button text="← Back" onAction="#handleBack" styleClass="btn-outline" style="-fx-background-radius: 20px; -fx-padding: 8 16; -fx-cursor: hand;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="saveBtn" text="🤍 Save" onAction="#handleSaveToggle" styleClass="btn-outline" />
+        <Button fx:id="editBtn" text="✏️ Edit" onAction="#handleEdit" styleClass="btn-primary" style="-fx-background-color: #FFF2E6; -fx-text-fill: #E76F51; -fx-border-color: #FFE0CC; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8 20; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Button fx:id="deleteBtn" text="🗑️ Delete" onAction="#handleDelete" styleClass="btn-danger" style="-fx-background-color: #EF4444; -fx-background-radius: 20px; -fx-padding: 8 20; -fx-font-weight: bold; -fx-cursor: hand;"/>
+    </HBox>
+
+    <Separator style="-fx-opacity: 0.4;"/>
+
+    <!-- Main Workspace HBox: Left Column (Image & Stats) + Right Column (Ingredients & Steps) -->
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        
+        <!-- Left Panel: Cover Image, Title and Metadata Card -->
+        <VBox spacing="16" prefWidth="300" minWidth="300" maxWidth="300">
+            
+            <!-- Hero Image Frame -->
+            <StackPane style="-fx-background-color: #FFFFFF; -fx-background-radius: 20px; -fx-padding: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 8, 0, 0, 2); -fx-alignment: center;">
+                <ImageView fx:id="recipeImageView" fitWidth="280" fitHeight="180" preserveRatio="false"/>
+            </StackPane>
+            
+            <!-- Information Details Card -->
+            <VBox spacing="14" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);">
+                
+                <!-- Title & Rating -->
+                <VBox spacing="6">
+                    <Label fx:id="titleLabel" text="Recipe Title" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A; -fx-wrap-text: true;"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label fx:id="ratingLabel" text="★ 4.8" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #F59E0B;"/>
+                        <Label fx:id="authorLabel" text="By: nhan" style="-fx-font-size: 12px; -fx-text-fill: #718096; -fx-font-style: italic;"/>
+                    </HBox>
+                </VBox>
+                
+                <Separator style="-fx-opacity: 0.3;"/>
+                
+                <!-- Detailed Meta Info Grid -->
+                <GridPane hgap="10" vgap="10">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50"/>
+                        <ColumnConstraints percentWidth="50"/>
+                    </columnConstraints>
+                    
+                    <Label fx:id="prepTimeLabel" text="⏱ Prep: 5 min" style="-fx-font-size: 12px; -fx-text-fill: #4A5568; -fx-font-weight: 500;" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <Label fx:id="cookTimeLabel" text="🍳 Cook: 10 min" style="-fx-font-size: 12px; -fx-text-fill: #4A5568; -fx-font-weight: 500;" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    <Label fx:id="totalTimeLabel" text="⚡ Total: 15 min" style="-fx-font-size: 12px; -fx-text-fill: #E76F51; -fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2"/>
+                    <Label fx:id="servingsLabel" text="👤 Servings: 1" style="-fx-font-size: 12px; -fx-text-fill: #4A5568; -fx-font-weight: 500;" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2"/>
+                </GridPane>
+                
+                <Separator style="-fx-opacity: 0.3;"/>
+                
+                <!-- Tags Panel -->
+                <VBox spacing="6">
+                    <Label text="Tags" style="-fx-font-size: 11px; -fx-text-fill: #718096; -fx-font-weight: bold;"/>
+                    <FlowPane fx:id="tagsPane" hgap="6" vgap="6"/>
+                </VBox>
+                
+            </VBox>
+            
+        </VBox>
+        
+        <!-- Right Panel: Ingredients (top) and Cooking Steps (bottom) -->
+        <VBox spacing="20" HBox.hgrow="ALWAYS">
+            
+            <!-- Ingredients Card -->
+            <VBox spacing="10" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);" prefHeight="220">
+                <Label text="🥬 Ingredients List" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+                <ListView fx:id="ingredientList" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent; -fx-padding: 0;"/>
+            </VBox>
+            
+            <!-- Cooking Steps Card -->
+            <VBox spacing="10" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);" VBox.vgrow="ALWAYS">
+                <Label text="🍳 Cooking Steps" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+                
+                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="stepsContainer" spacing="8" style="-fx-background-color: transparent; -fx-padding: 2 2 2 2;"/>
+                </ScrollPane>
+            </VBox>
+            
+        </VBox>
+        
+    </HBox>
+
+</VBox>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.vinrecipe.controller.RecipesController"
+      styleClass="view-root" spacing="10"
+      style="-fx-background-color: #FAFAFA;">
+
+    <padding><Insets top="12" bottom="12" left="24" right="24"/></padding>
+
+    <!-- Header row -->
+    <HBox alignment="CENTER_LEFT" spacing="16">
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Browse Recipes" styleClass="page-title" style="-fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
+            <Label fx:id="userLabel" text="Discover, create, and organize your favorite meals" styleClass="page-subtitle" style="-fx-font-size: 13px; -fx-text-fill: #7F8C8D;"/>
+        </VBox>
+        <Button text="↻ Refresh" onAction="#handleRefresh" styleClass="btn-outline" style="-fx-background-radius: 20px; -fx-padding: 8 16; -fx-cursor: hand;"/>
+        <Button text="✚ Add Recipe" onAction="#handleAddRecipe" styleClass="btn-primary" style="-fx-background-color: #1E5631; -fx-background-radius: 20px; -fx-padding: 8 20; -fx-font-weight: bold; -fx-cursor: hand; -fx-text-fill: white;"/>
+    </HBox>
+
+    <Separator style="-fx-opacity: 0.4;"/>
+
+    <!-- Search and Filter panel (Compacted & Raised) -->
+    <VBox spacing="10" styleClass="section-box" style="-fx-padding: 12 16; -fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 8, 0, 0, 1);">
+        
+        <!-- Search & Core Controls Bar -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Filter &amp; Sort Panel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+            <Region HBox.hgrow="ALWAYS" />
+            
+            <Label text="Sort:" style="-fx-font-size: 11px; -fx-text-fill: #718096;"/>
+            <ComboBox fx:id="sortCombo" prefWidth="120" onAction="#handleSearchAndFilter" style="-fx-background-color: #FFFFFF; -fx-border-color: #E2E8F0; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 2 6; -fx-font-size: 11px; -fx-cursor: hand;"/>
+            
+            <ComboBox fx:id="tagFilterCombo" promptText="Other Tags" prefWidth="110" onAction="#handleSearchAndFilter" style="-fx-background-color: #FFFFFF; -fx-border-color: #E2E8F0; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 2 6; -fx-font-size: 11px; -fx-cursor: hand;"/>
+            <ToggleButton fx:id="savedToggleBtn" text="★ Saved" onAction="#handleSearchAndFilter" style="-fx-background-color: transparent; -fx-text-fill: #E67E22; -fx-font-size: 11px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 2 4;"/>
+            <Button text="Clear" onAction="#handleClear" style="-fx-background-color: transparent; -fx-text-fill: #718096; -fx-font-size: 11px; -fx-cursor: hand; -fx-padding: 2 4;"/>
+        </HBox>
+
+        <!-- Clear my Fridge chips row -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Fridge 🧊" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #2D3748; -fx-min-width: 70px;"/>
+            <FlowPane hgap="6" vgap="6" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                <ToggleButton fx:id="fEgg" text="🥚 Eggs" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fAvocado" text="🥑 Avocado" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fBread" text="🍞 Bread" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fChicken" text="🍗 Chicken" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fTomato" text="🍅 Tomatoes" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fSpinach" text="🥬 Spinach" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fRice" text="🍚 Rice" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fPotato" text="🥔 Potato" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fTofu" text="🍢 Tofu" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fRibs" text="🍖 Pork Ribs" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="fBeef" text="🥩 Beef" onAction="#handleFridgeToggle" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+            </FlowPane>
+        </HBox>
+
+        <!-- Quick Filters Row -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Category 🍽" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #2D3748; -fx-min-width: 70px;"/>
+            <FlowPane hgap="6" vgap="6" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                <ToggleButton fx:id="chipBreakfast" text="Breakfast (0)" onAction="#handleChipAction" style="-fx-background-color: #FFFDF9; -fx-border-color: #E2E8F0; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="chipLunch" text="Lunch (0)" onAction="#handleChipAction" style="-fx-background-color: #FFFDF9; -fx-border-color: #E2E8F0; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="chipDinner" text="Dinner (0)" onAction="#handleChipAction" style="-fx-background-color: #FFFDF9; -fx-border-color: #E2E8F0; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="chipSnacks" text="Snacks (0)" onAction="#handleChipAction" style="-fx-background-color: #FFFDF9; -fx-border-color: #E2E8F0; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="chipDesserts" text="Desserts (0)" onAction="#handleChipAction" style="-fx-background-color: #FFFDF9; -fx-border-color: #E2E8F0; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="chipVegan" text="Vegan (0)" onAction="#handleChipAction" style="-fx-background-color: #FFFDF9; -fx-border-color: #E2E8F0; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+                <ToggleButton fx:id="chipHighEnergy" text="High Energy (0)" onAction="#handleChipAction" style="-fx-background-color: #FFFDF9; -fx-border-color: #E2E8F0; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 4 10; -fx-font-size: 11px; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
+            </FlowPane>
+        </HBox>
+    </VBox>
+
+    <HBox alignment="CENTER_LEFT">
+        <Label fx:id="statusLabel" styleClass="status-label" HBox.hgrow="ALWAYS" wrapText="true" style="-fx-text-fill: #E76F51; -fx-font-size: 13px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="resultCountLabel" styleClass="page-subtitle" style="-fx-font-weight: bold; -fx-text-fill: #4A5568;"/>
+    </HBox>
+
+    <!-- Recipe Grid -->
+    <ScrollPane fitToWidth="true" styleClass="recipe-scroll" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;">
+        <FlowPane fx:id="recipeGrid" hgap="16" vgap="20" styleClass="recipe-grid" style="-fx-background-color: transparent;">
+            <padding><Insets top="8" bottom="8" left="4" right="4"/></padding>
+        </FlowPane>
+    </ScrollPane>
+
+</VBox>
