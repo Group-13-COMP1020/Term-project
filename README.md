@@ -5,11 +5,11 @@
 ## Team Members
 | Name | Student ID | Role |
 |---|---|---|
-| Nguyen Trong Nhan | V202502098 | Team Leader, Architecture, DAO |
-| Nguyen Thi Quynh Trang | V202502665 | Model Layer, User System |
-| Nguyen Tien Nhat Nguyen | V202502943 | Service Layer, Search Algorithm |
-| Dang Tuan Kiet | V202502041 | JavaFX GUI |
-| Do Viet Phuong | V202502638 | Shopping List, Testing |
+| Nguyen Trong Nhan | V202502098 | Team Leader, Frontend Controllers, GitHub Manager |
+| Nguyen Thi Quynh Trang | V202502665 | Frontend UI & Styling (CSS/FXML Layouts) |
+| Nguyen Tien Nhat Nguyen | V202502943 | Algorithms & Data Structures (Inverted Index, Sorting) |
+| Dang Tuan Kiet | V202502041 | Relational Database & JDBC/DAO Layer |
+| Do Viet Phuong | V202502638 | OOP Core Models, Encapsulation & Inheritance |
 
 ---
 
@@ -17,69 +17,57 @@
 
 | Requirement | Version |
 |---|---|
-| Java | 17+ (tested on Java 25) |
+| Java | 17+ (tested on Java 17-25) |
 | Maven | 3.8+ |
-| MySQL Server | 8.x |
+| Database | SQLite (Self-contained, zero-configuration) |
 
 ---
 
-## Setup Instructions
+## Setup & Running Instructions
 
-### 1. Database Setup
+### 1. Zero-Dependency Database Setup
+The application is built on a highly portable local **SQLite** database (`vinrecipe.db`). 
+* **No database server installation** (like MySQL or PostgreSQL) is required!
+* **No manual schema script execution** is required.
+* The system automatically initializes the schema and seeds 28 premium gourmet recipes (including diverse Asian, Western, and traditional Vietnamese dishes) and all user roles on the first launch.
 
-Open MySQL and run the schema script:
+**Pre-seeded Demo Accounts:**
+| Username | Password | Role / Subclass | Room |
+|---|---|---|---|
+| `admin` | `admin123` | Admin | *Global* |
+| `nhan` | `nhan123` | Room Leader | VinUni Dorm A-101 |
+| `trang` | `trang123` | Normal Student | VinUni Dorm A-101 |
+| `nguyen` | `nguyen123` | Normal Student | VinUni Dorm A-101 |
+| `kiet` | `kiet123` | Normal Student | VinUni Dorm A-101 |
+| `phuong` | `phuong123` | Normal Student | VinUni Dorm A-101 |
 
-```bash
-mysql -u root -p < src/main/resources/db/schema.sql
-```
-
-Or paste it manually in MySQL Workbench.
-
-This creates:
-- Database `vinrecipe_db`
-- All necessary tables
-- Demo seed data (5 recipes, 6 users)
-
-**Demo accounts:**
-| Username | Password | Role |
-|---|---|---|
-| `admin` | `admin123` | Admin |
-| `nhan` | `nhan123` | Room Leader |
-| `trang` | `trang123` | Normal Student |
-
-### 2. Configure Database Connection
-
-Edit `src/main/java/com/vinrecipe/dao/DatabaseConnection.java`:
-
-```java
-private static final String URL      = "jdbc:mysql://localhost:3306/vinrecipe_db?...";
-private static final String USER     = "root";         // your MySQL username
-private static final String PASSWORD = "vinrecipe";    // your MySQL password
-```
+### 2. Auto-Configured JDBC Connection
+Since the application connects locally to `vinrecipe.db`, the database configuration is fully encapsulated. You do not need to configure any username, password, or local host settings.
 
 ### 3. Build & Run
-
+Simply open your terminal at the project root and execute:
 ```bash
-mvn clean compile
+mvn compile
 mvn javafx:run
 ```
+*(For Windows users, you can also simply double-click the `run-app.bat` script in the root directory to build and launch the application instantly!)*
 
 ---
 
 ## Project Architecture
 
 ```
-Model → DAO → Service → View/Controller (JavaFX)
+Model (OOP) → DAO (JDBC) → Service (Business Logic) → View/Controller (JavaFX)
 ```
 
 ### Layer Overview
 
 | Layer | Package | Responsibility |
 |---|---|---|
-| **Model** | `com.vinrecipe.model` | Data classes (User, Recipe, Ingredient, etc.) |
-| **DAO** | `com.vinrecipe.dao` | JDBC database operations |
-| **Service** | `com.vinrecipe.service` | Business logic (Search, CRUD, Aggregation) |
-| **Controller** | `com.vinrecipe.controller` | JavaFX UI controllers |
+| **Model** | `com.vinrecipe.model` | Abstract `User` base class and subclasses, `Recipe`, `Ingredient`, `Room`, `Tag`, `ShoppingList` |
+| **DAO** | `com.vinrecipe.dao` | SQLite JDBC transaction layer mapping database rows to OOP objects |
+| **Service** | `com.vinrecipe.service` | Encapsulates core business logic (Search index, Aggregation engines) |
+| **Controller** | `com.vinrecipe.controller` | Swaps view contexts inside `MainLayout.fxml` and processes user events |
 
 ---
 
@@ -87,10 +75,10 @@ Model → DAO → Service → View/Controller (JavaFX)
 
 | Concept | Where |
 |---|---|
-| **Inheritance** | `Admin`, `NormalStudent`, `RoomLeader` extend abstract `User` |
-| **Encapsulation** | All model fields `private` with validated getters/setters |
-| **Polymorphism** | `getPermissionLevel()` overridden in each User subclass |
-| **Abstraction** | `User` is abstract class; `ContextAware` is an interface |
+| **Inheritance** | `Admin`, `NormalStudent`, and `RoomLeader` extend the abstract `User` parent class |
+| **Abstraction** | `User` declared as `public abstract class` with abstract method `getPermissionLevel()` |
+| **Polymorphism** | `getPermissionLevel()` overridden by each subclass to return different privilege tiers (1, 2, 3) |
+| **Encapsulation** | All core fields are private; input validation is managed inside public getters/setters |
 | **Composition** | `Recipe` HAS-A `List<Ingredient>`, `Room` HAS-A `List<NormalStudent>` |
 
 ---
@@ -105,30 +93,30 @@ matchCount:    HashMap<Recipe, Integer>
 Sort: completion% DESC → prepTime ASC
 ```
 
-### Shopping List Aggregation (`ShoppingListService`)
+### Shopping List Aggregation (`ShoppingList`)
 ```
-Input:  [Recipe_A, Recipe_B]
-Uses:   HashMap.merge(name, quantity, Double::sum)
-Output: {"chicken" → 700g, "garlic" → 30g, ...}
+Input:  List<Recipe> selectedRecipes
+Method: HashMap.merge(name, quantity, Double::sum)
+Output: Map<String, Double> aggregatedItems ("tofu" → 2.0 blocks, "garlic" → 3.0 pcs)
 ```
 
 ### Data Structures Used
 | Structure | Where | Purpose |
 |---|---|---|
-| `ArrayList<Recipe>` | DAO, Service | Recipe lists |
-| `ArrayList<Ingredient>` | Recipe model | Ingredient storage |
-| `HashSet<String>` | SearchService | Unique tag names for ComboBox |
-| `HashMap<String, Double>` | ShoppingList | Ingredient aggregation |
-| `HashMap<String, List<Recipe>>` | SearchService | Inverted index |
-| `HashMap<Recipe, Integer>` | SearchService | Match count |
+| `ArrayList<Recipe>` | DAO, Service | Dynamic lists of recipes |
+| `ArrayList<Ingredient>` | Recipe model | Ordered ingredients per recipe |
+| `HashSet<String>` | SearchService | Unique tag names for filter ComboBox |
+| `HashMap<String, Double>` | ShoppingList | Consolidating duplicate ingredients mathematically |
+| `HashMap<String, List<Recipe>>` | SearchService | Inverted index mapping ingredients to containing recipes |
+| `HashMap<Recipe, Integer>` | SearchService | Track match frequencies during multi-ingredient queries |
 
 ---
 
 ## Features
 
-- ✅ **Login / Register** — Role-based authentication (Admin, RoomLeader, Student)
-- ✅ **Dashboard** — Recipe cards with sort by rating / prep time / price
-- ✅ **Recipe CRUD** — Create, view, edit, delete recipes with ingredients & tags
-- ✅ **Search** — By title (LIKE), by available ingredients (Inverted Index), by tag
-- ✅ **Shopping List** — Select multiple recipes → auto-generate aggregated grocery list
-- ✅ **Single-window navigation** — No new windows, content swapped in BorderPane
+* 🔐 **Login & Role-Based Flow** — Dedicated pathways and features depending on whether the user is an Admin, a Room Leader, or a Student.
+* 📋 **Dynamic Sorting & Filtering** — Sort all recipes by Rating (DESC), Prep Time (ASC), or estimated Total Price (ASC) with a simple click.
+* ✏️ **Complete Recipe CRUD** — Create new recipes with custom ingredients and tags, edit details, and delete custom-authored recipes.
+* 🔍 **Smart Recommendations** — Match dishes instantly using your available ingredients via the high-speed Inverted Index algorithm.
+* 🛒 **Mathematical Shopping Lists** — Select multiple recipes and let the aggregation engine compile a single consolidated grocery list with dynamic total cost estimates.
+* 🏠 **Room Management** — Join your college roommates, view member rosters, and coordinate using the live Announcements Board.
