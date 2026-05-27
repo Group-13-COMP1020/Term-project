@@ -70,6 +70,7 @@ public class RecipesController implements ContextAware {
     private MainController mainController;
 
     private List<Recipe> allRecipes;
+    private Set<Integer> savedRecipeIds = new HashSet<>();
 
     @Override
     public void setContext(User currentUser, RecipeService recipeService,
@@ -89,7 +90,7 @@ public class RecipesController implements ContextAware {
         tagFilterCombo.getSelectionModel().selectFirst();
 
         // Load Sort Options
-        sortCombo.setItems(FXCollections.observableArrayList("Recommended", "Newest First", "Top Rated", "Quickest", "Cheapest"));
+        sortCombo.setItems(FXCollections.observableArrayList("Recommended", "Newest First", "Quickest", "Cheapest"));
         sortCombo.getSelectionModel().selectFirst();
 
         // Load recipes and apply search pipeline
@@ -97,9 +98,51 @@ public class RecipesController implements ContextAware {
     }
 
     private void loadAndApply() {
-        allRecipes = recipeService.getAllRecipes();
+        allRecipes = filterRecipesByRoom(recipeService.getAllRecipes());
+        loadSavedRecipeIds();
         updateQuickFilterCounts();
         handleSearchAndFilter();
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
+    }
+
+    private void loadSavedRecipeIds() {
+        if (currentUser != null && recipeService != null) {
+            try {
+                savedRecipeIds = recipeService.getSavedRecipes(currentUser.getUserId()).stream()
+                        .map(Recipe::getRecipeId)
+                        .collect(Collectors.toCollection(HashSet::new));
+            } catch (Exception e) {
+                System.err.println("Error loading saved recipe IDs: " + e.getMessage());
+                savedRecipeIds = new HashSet<>();
+            }
+        } else {
+            savedRecipeIds = new HashSet<>();
+        }
     }
 
     private void updateQuickFilterCounts() {
@@ -145,9 +188,11 @@ public class RecipesController implements ContextAware {
 
         List<Recipe> filteredList = new ArrayList<>();
 
-        // 1. Saved Recipes Filter
+        // 1. Saved Recipes Filter using O(1) in-memory cached lookup
         if (savedToggleBtn.isSelected()) {
-            filteredList = recipeService.getSavedRecipes(currentUser.getUserId());
+            filteredList = allRecipes.stream()
+                    .filter(r -> savedRecipeIds.contains(r.getRecipeId()))
+                    .collect(Collectors.toList());
         } else {
             filteredList = new ArrayList<>(allRecipes);
         }
@@ -247,9 +292,7 @@ public class RecipesController implements ContextAware {
 
         // 5. Sorting Pipeline
         String selectedSort = sortCombo.getValue();
-        if ("Top Rated".equals(selectedSort)) {
-            filteredList = searchService.sortByRating(filteredList);
-        } else if ("Quickest".equals(selectedSort)) {
+        if ("Quickest".equals(selectedSort)) {
             filteredList = searchService.sortByPrepTime(filteredList);
         } else if ("Cheapest".equals(selectedSort)) {
             filteredList = searchService.sortByPrice(filteredList);
@@ -556,20 +599,22 @@ public class RecipesController implements ContextAware {
         overlay.setPadding(new Insets(8));
         overlay.setVisible(false); // hidden by default
 
-        // Heart Button (Save/Bookmark)
+        // Heart Button (Save/Bookmark) using O(1) in-memory cached lookup
         Button heartBtn = new Button();
-        boolean isSaved = recipeService.isRecipeSaved(currentUser.getUserId(), recipe.getRecipeId());
-        heartBtn.setText(isSaved ? "❤️" : "🤍");
+        boolean isSaved = savedRecipeIds.contains(recipe.getRecipeId());
+        heartBtn.setText(isSaved ? "★" : "☆");
         styleCircularButton(heartBtn);
         heartBtn.setOnAction(e -> {
             e.consume();
-            boolean nowSaved = recipeService.isRecipeSaved(currentUser.getUserId(), recipe.getRecipeId());
+            boolean nowSaved = savedRecipeIds.contains(recipe.getRecipeId());
             if (nowSaved) {
                 recipeService.unsaveRecipe(currentUser.getUserId(), recipe.getRecipeId());
-                heartBtn.setText("🤍");
+                savedRecipeIds.remove(recipe.getRecipeId());
+                heartBtn.setText("☆");
             } else {
                 recipeService.saveRecipe(currentUser.getUserId(), recipe.getRecipeId());
-                heartBtn.setText("❤️");
+                savedRecipeIds.add(recipe.getRecipeId());
+                heartBtn.setText("★");
             }
             if (savedToggleBtn.isSelected()) {
                 handleSearchAndFilter();
@@ -577,7 +622,7 @@ public class RecipesController implements ContextAware {
         });
 
         // Plus Button (Add to Shopping List)
-        Button plusBtn = new Button("➕");
+        Button plusBtn = new Button("+");
         styleCircularButton(plusBtn);
         plusBtn.setOnAction(e -> {
             e.consume();
@@ -585,7 +630,7 @@ public class RecipesController implements ContextAware {
         });
 
         // Edit Button (Edit Recipe details)
-        Button editBtn = new Button("✏️");
+        Button editBtn = new Button("✎");
         styleCircularButton(editBtn);
         editBtn.setOnAction(e -> {
             e.consume();
@@ -651,18 +696,7 @@ public class RecipesController implements ContextAware {
         Label timeLabel = new Label("⏱ " + recipe.getTotalTime() + " min");
         timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #7F8C8D; -fx-font-weight: 500;");
         
-        Label servingsLabel = new Label("👤 " + recipe.getServings() + " serving" + (recipe.getServings() > 1 ? "s" : ""));
-        servingsLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #7F8C8D; -fx-font-weight: 500;");
-        
-        String diffText = getDifficulty(recipe);
-        Label diffLabel = new Label(diffText);
-        if ("Medium".equalsIgnoreCase(diffText)) {
-            diffLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #E67E22; -fx-font-weight: bold;");
-        } else {
-            diffLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #27AE60; -fx-font-weight: bold;");
-        }
-        
-        metaRow.getChildren().addAll(timeLabel, servingsLabel, diffLabel);
+        metaRow.getChildren().addAll(timeLabel);
 
         // --- Tag Chips Panel ---
         FlowPane tagsPane = new FlowPane(4, 4);
@@ -723,8 +757,8 @@ public class RecipesController implements ContextAware {
         Label tLabel = new Label(recipe.getTitle());
         tLabel.setStyle("-fx-text-fill: #2ECC71; -fx-font-weight: bold; -fx-font-size: 14px; -fx-wrap-text: true;");
 
-        Label rLabel = new Label("★ " + String.format("%.1f", recipe.getRating()) + "  |  ⏱ " + recipe.getTotalTime() + " min");
-        rLabel.setStyle("-fx-text-fill: #F1C40F; -fx-font-weight: bold; -fx-font-size: 12px;");
+        Label rLabel = new Label("⏱ " + recipe.getTotalTime() + " min");
+        rLabel.setStyle("-fx-text-fill: #E76F51; -fx-font-weight: bold; -fx-font-size: 12px;");
 
         Label dLabel = new Label(recipe.getDescription() != null && !recipe.getDescription().isBlank() ? recipe.getDescription() : "No description.");
         dLabel.setStyle("-fx-text-fill: #ECF0F1; -fx-font-size: 11px; -fx-wrap-text: true;");
@@ -773,7 +807,7 @@ public class RecipesController implements ContextAware {
 
     @FXML
     private void handleRefresh() {
-        searchService.buildIndex(recipeService.getAllRecipes());
+        searchService.buildIndex(filterRecipesByRoom(recipeService.getAllRecipes()));
         loadAndApply();
     }
 

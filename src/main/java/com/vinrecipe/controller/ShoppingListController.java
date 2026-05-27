@@ -6,6 +6,8 @@ import com.vinrecipe.service.RecipeService;
 import com.vinrecipe.service.SearchService;
 import com.vinrecipe.service.ShoppingListService;
 import javafx.fxml.FXML;
+import javafx.scene.control.DatePicker;
+import java.time.LocalDate;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -36,6 +38,7 @@ public class ShoppingListController implements ContextAware {
     @FXML private ListView<ShoppingListItem> shoppingListView;
     @FXML private Label totalPriceLabel;
     @FXML private Label instructionLabel;
+    @FXML private DatePicker planDatePicker;
 
     @FXML private VBox suggestionBox;
     @FXML private HBox suggestionPane;
@@ -101,6 +104,28 @@ public class ShoppingListController implements ContextAware {
             
             setupRecipeList(savedRecipes);
 
+            // Load and bind plan date picker
+            String savedDateStr = shoppingListDAO.getPlanDate(listId);
+            if (savedDateStr != null && !savedDateStr.trim().isEmpty()) {
+                try {
+                    planDatePicker.setValue(LocalDate.parse(savedDateStr));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            
+            final int finalListId = listId;
+            planDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null) {
+                    try {
+                        shoppingListDAO.updatePlanDate(finalListId, newVal.toString());
+                        postPlanDateAnnouncement(newVal.toString());
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+
             if (!savedRecipes.isEmpty()) {
                 handleGenerate();
             } else {
@@ -126,7 +151,7 @@ public class ShoppingListController implements ContextAware {
     }
 
     private void setupRecipeList(List<Recipe> savedRecipes) {
-        List<Recipe> allRecipes = recipeService.getAllRecipes();
+        List<Recipe> allRecipes = filterRecipesByRoom(recipeService.getAllRecipes());
         recipeListView.getItems().setAll(allRecipes);
         recipeListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         recipeListView.setCellFactory(lv -> new RecipeCardCell());
@@ -136,6 +161,32 @@ public class ShoppingListController implements ContextAware {
         for (Recipe r : savedRecipes) {
             selectedRecipeIds.add(r.getRecipeId());
         }
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
     }
 
     @FXML
@@ -302,7 +353,7 @@ public class ShoppingListController implements ContextAware {
 
         Set<Integer> selectedIds = selected.stream().map(Recipe::getRecipeId).collect(Collectors.toSet());
 
-        List<Recipe> allRecipes = recipeService.getAllRecipes();
+        List<Recipe> allRecipes = filterRecipesByRoom(recipeService.getAllRecipes());
         List<Recipe> candidates = allRecipes.stream()
                 .filter(r -> !selectedIds.contains(r.getRecipeId()))
                 .toList();
@@ -425,7 +476,7 @@ public class ShoppingListController implements ContextAware {
                 setStyle("-fx-background-color: transparent; -fx-padding: 0;");
             } else {
                 recipeTitle.setText(recipe.getTitle());
-                recipeMeta.setText("⏱ " + recipe.getTotalTime() + " min  |  👤 " + recipe.getServings() + " serving");
+                recipeMeta.setText("⏱ " + recipe.getTotalTime() + " min");
                 
                 boolean isSelected = selectedRecipeIds.contains(recipe.getRecipeId());
                 if (isSelected) {
@@ -472,6 +523,36 @@ public class ShoppingListController implements ContextAware {
                 }
                 setGraphic(container);
             }
+        }
+    }
+
+    private void postPlanDateAnnouncement(String targetDate) {
+        try {
+            int roomId = getUserRoomId(currentUser);
+            if (roomId > 0) {
+                // Get selected recipe titles
+                List<Recipe> selected = new ArrayList<>();
+                for (Recipe r : recipeListView.getItems()) {
+                    if (selectedRecipeIds.contains(r.getRecipeId())) {
+                        selected.add(r);
+                    }
+                }
+                
+                String scheduleMsg;
+                if (selected.isEmpty()) {
+                    scheduleMsg = String.format("📅 %s updated the room cooking plan target date to %s.", 
+                        currentUser.getUsername(), targetDate);
+                } else {
+                    String recipesStr = selected.stream().map(Recipe::getTitle).collect(Collectors.joining(", "));
+                    scheduleMsg = String.format("📅 %s scheduled a cooking plan for %s! Selected: %s", 
+                        currentUser.getUsername(), targetDate, recipesStr);
+                }
+                
+                com.vinrecipe.dao.UserDAO userDAO = new com.vinrecipe.dao.UserDAO();
+                userDAO.insertAnnouncement(roomId, currentUser.getUserId(), scheduleMsg);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

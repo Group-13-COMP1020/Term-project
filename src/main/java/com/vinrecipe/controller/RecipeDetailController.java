@@ -1,5 +1,7 @@
 package com.vinrecipe.controller;
 
+import java.util.List;
+import java.util.ArrayList;
 import com.vinrecipe.model.*;
 import com.vinrecipe.service.RecipeService;
 import com.vinrecipe.service.SearchService;
@@ -26,13 +28,11 @@ import javafx.scene.shape.Rectangle;
 public class RecipeDetailController implements ContextAware {
 
     @FXML private Label titleLabel;
-    @FXML private Label ratingLabel;
     
     // Detailed Meta Labels
     @FXML private Label prepTimeLabel;
     @FXML private Label cookTimeLabel;
     @FXML private Label totalTimeLabel;
-    @FXML private Label servingsLabel;
     @FXML private Label authorLabel;
     
     @FXML private ImageView recipeImageView;
@@ -65,13 +65,11 @@ public class RecipeDetailController implements ContextAware {
         this.recipe = recipe;
 
         titleLabel.setText(recipe.getTitle());
-        ratingLabel.setText("★ " + String.format("%.1f", recipe.getRating()));
         
         // Detailed Meta values
-        prepTimeLabel.setText("⏱ Prep: " + recipe.getPrepTime() + " min");
-        cookTimeLabel.setText("🍳 Cook: " + recipe.getCookTime() + " min");
-        totalTimeLabel.setText("⚡ Total: " + recipe.getTotalTime() + " min");
-        servingsLabel.setText("👤 Servings: " + recipe.getServings());
+        prepTimeLabel.setText("Prep: " + recipe.getPrepTime() + " min");
+        cookTimeLabel.setText("Cook: " + recipe.getCookTime() + " min");
+        totalTimeLabel.setText("Total: " + recipe.getTotalTime() + " min");
 
         String authorName = recipe.getAuthor() != null ? recipe.getAuthor().getUsername() : "Unknown";
         authorLabel.setText("By: " + capitalize(authorName));
@@ -253,7 +251,7 @@ public class RecipeDetailController implements ContextAware {
         confirm.showAndWait().ifPresent(btn -> {
             if (btn == ButtonType.YES) {
                 recipeService.deleteRecipe(recipe.getRecipeId());
-                searchService.buildIndex(recipeService.getAllRecipes());
+                searchService.buildIndex(filterRecipesByRoom(recipeService.getAllRecipes()));
                 mainController.loadView("/fxml/views/RecipesView.fxml");
             }
         });
@@ -267,5 +265,40 @@ public class RecipeDetailController implements ContextAware {
     private String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private int getUserRoomId(User user) {
+        if (user instanceof NormalStudent) {
+            return ((NormalStudent) user).getRoomId();
+        } else if (user instanceof RoomLeader) {
+            return ((RoomLeader) user).getRoomId();
+        }
+        return 0;
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
     }
 }

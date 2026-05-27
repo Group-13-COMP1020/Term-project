@@ -193,17 +193,30 @@ public class UserDAO {
         }
     }
 
+    public static class Announcement {
+        private final String message;
+        private final String createdAt;
+
+        public Announcement(String message, String createdAt) {
+            this.message = message;
+            this.createdAt = createdAt;
+        }
+
+        public String getMessage() { return message; }
+        public String getCreatedAt() { return createdAt; }
+    }
+
     /** Get all announcements for a room, ordered by created_at. */
-    public List<String> getAnnouncements(int roomId) throws SQLException {
-        List<String> list = new ArrayList<>();
+    public List<Announcement> getAnnouncements(int roomId) throws SQLException {
+        List<Announcement> list = new ArrayList<>();
         if (roomId <= 0) return list;
-        String sql = "SELECT message FROM announcements WHERE room_id = ? ORDER BY created_at ASC";
+        String sql = "SELECT message, created_at FROM announcements WHERE room_id = ? ORDER BY created_at ASC";
         Connection conn = DatabaseConnection.getInstance();
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, roomId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                list.add(rs.getString("message"));
+                list.add(new Announcement(rs.getString("message"), rs.getString("created_at")));
             }
         }
         return list;

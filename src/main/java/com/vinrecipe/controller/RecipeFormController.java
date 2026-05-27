@@ -24,7 +24,6 @@ public class RecipeFormController implements ContextAware {
     @FXML private TextArea instructionsArea;
     @FXML private TextField prepTimeField;
     @FXML private TextField cookTimeField;
-    @FXML private TextField servingsField;
     @FXML private TextField imageUrlField;
 
     // Ingredient input row
@@ -74,7 +73,6 @@ public class RecipeFormController implements ContextAware {
         instructionsArea.setText(recipe.getInstructions() != null ? recipe.getInstructions() : "");
         prepTimeField.setText(String.valueOf(recipe.getPrepTime()));
         cookTimeField.setText(String.valueOf(recipe.getCookTime()));
-        servingsField.setText(String.valueOf(recipe.getServings()));
         imageUrlField.setText(recipe.getImageUrl() != null ? recipe.getImageUrl() : "");
         ingredients.setAll(recipe.getIngredients());
         selectedTags.setAll(recipe.getTags());
@@ -152,9 +150,7 @@ public class RecipeFormController implements ContextAware {
             String cookStr = getSafeText(cookTimeField);
             int cookTime = cookStr.isEmpty() ? 0 : Integer.parseInt(cookStr);
             
-            String servingsStr = getSafeText(servingsField);
-            int servings = servingsStr.isEmpty() ? 1 : Integer.parseInt(servingsStr);
-            
+            int servings = 1;
             double rating = (editingRecipe != null) ? editingRecipe.getRating() : 5.0;
 
             Recipe recipe = editingRecipe != null ? editingRecipe : new Recipe();
@@ -179,13 +175,13 @@ public class RecipeFormController implements ContextAware {
             }
 
             if (success) {
-                searchService.buildIndex(recipeService.getAllRecipes());
+                searchService.buildIndex(filterRecipesByRoom(recipeService.getAllRecipes()));
                 mainController.showRecipes();
             } else {
                 showStatus("Failed to save recipe. Check input and try again.", true);
             }
         } catch (NumberFormatException e) {
-            showStatus("Prep time, cook time, and servings must be whole numbers.", true);
+            showStatus("Prep time and cook time must be whole numbers.", true);
         } catch (IllegalArgumentException e) {
             showStatus(e.getMessage(), true);
         } catch (Exception e) {
@@ -212,8 +208,44 @@ public class RecipeFormController implements ContextAware {
     }
 
     private void showStatus(String msg, boolean isError) {
-        statusLabel.setText(msg);
-        statusLabel.getStyleClass().removeAll("status-error", "status-success");
-        statusLabel.getStyleClass().add(isError ? "status-error" : "status-success");
+        if (statusLabel != null) {
+            statusLabel.setText(msg);
+            statusLabel.setStyle("-fx-text-fill: " + (isError ? "#E53E3E" : "#38A169") + ";");
+        }
+    }
+
+    private int getUserRoomId(User user) {
+        if (user instanceof NormalStudent) {
+            return ((NormalStudent) user).getRoomId();
+        } else if (user instanceof RoomLeader) {
+            return ((RoomLeader) user).getRoomId();
+        }
+        return 0;
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
     }
 }

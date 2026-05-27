@@ -1,7 +1,6 @@
 package com.vinrecipe.controller;
 
-import com.vinrecipe.model.Recipe;
-import com.vinrecipe.model.User;
+import com.vinrecipe.model.*;
 import com.vinrecipe.service.RecipeService;
 import com.vinrecipe.service.SearchService;
 import javafx.collections.FXCollections;
@@ -99,9 +98,10 @@ public class SearchController implements ContextAware {
     }
 
     private void renderResults(List<Recipe> recipes) {
+        List<Recipe> filtered = filterRecipesByRoom(recipes);
         resultsPane.getChildren().clear();
-        resultCountLabel.setText(recipes.size() + " recipe(s) found");
-        for (Recipe recipe : recipes) {
+        resultCountLabel.setText(filtered.size() + " recipe(s) found");
+        for (Recipe recipe : filtered) {
             resultsPane.getChildren().add(buildCard(recipe));
         }
     }
@@ -136,5 +136,40 @@ public class SearchController implements ContextAware {
             ctrl.setRecipe(recipe);
             mainController.loadViewNode(view);
         } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private int getUserRoomId(User user) {
+        if (user instanceof NormalStudent) {
+            return ((NormalStudent) user).getRoomId();
+        } else if (user instanceof RoomLeader) {
+            return ((RoomLeader) user).getRoomId();
+        }
+        return 0;
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
     }
 }

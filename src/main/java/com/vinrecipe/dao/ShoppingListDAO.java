@@ -135,4 +135,28 @@ public class ShoppingListDAO {
             stmt.executeUpdate();
         }
     }
+
+    public String getPlanDate(int listId) throws SQLException {
+        String sql = "SELECT plan_date FROM shopping_lists WHERE list_id = ?";
+        Connection conn = DatabaseConnection.getInstance();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, listId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("plan_date");
+                }
+            }
+        }
+        return null;
+    }
+
+    public void updatePlanDate(int listId, String planDate) throws SQLException {
+        String sql = "UPDATE shopping_lists SET plan_date = ? WHERE list_id = ?";
+        Connection conn = DatabaseConnection.getInstance();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, planDate);
+            stmt.setInt(2, listId);
+            stmt.executeUpdate();
+        }
+    }
 }

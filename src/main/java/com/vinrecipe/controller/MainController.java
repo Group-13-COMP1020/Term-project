@@ -1,6 +1,10 @@
 package com.vinrecipe.controller;
 
 import com.vinrecipe.model.User;
+import com.vinrecipe.model.Admin;
+import com.vinrecipe.model.NormalStudent;
+import com.vinrecipe.model.RoomLeader;
+import com.vinrecipe.model.Recipe;
 import com.vinrecipe.service.RecipeService;
 import com.vinrecipe.service.SearchService;
 import javafx.fxml.FXML;
@@ -11,9 +15,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Controller for MainLayout.fxml.
@@ -40,18 +49,27 @@ public class MainController {
     private final RecipeService recipeService = new RecipeService();
     private final SearchService searchService = new SearchService();
     private RecipesController activeRecipesController = null;
+    private Timeline searchDebouncer = null;
 
     @FXML
     public void initialize() {
-        // Dynamic search forwarding to active RecipesController
+        // Dynamic search forwarding to active RecipesController with debouncing
         topSearchField.textProperty().addListener((obs, oldVal, newVal) -> {
             if (activeRecipesController == null) {
                 // Switch to Recipes/Dashboard view if we aren't already there
                 showRecipes();
             }
-            if (activeRecipesController != null) {
-                activeRecipesController.setSearchQuery(newVal);
+            
+            if (searchDebouncer != null) {
+                searchDebouncer.stop();
             }
+            
+            searchDebouncer = new Timeline(new KeyFrame(Duration.millis(250), event -> {
+                if (activeRecipesController != null) {
+                    activeRecipesController.setSearchQuery(newVal);
+                }
+            }));
+            searchDebouncer.play();
         });
     }
 
@@ -59,8 +77,8 @@ public class MainController {
     public void setCurrentUser(User user) {
         this.currentUser = user;
         
-        // Load all recipes into search index
-        searchService.buildIndex(recipeService.getAllRecipes());
+        // Load only eligible recipes into search index
+        searchService.buildIndex(filterRecipesByRoom(recipeService.getAllRecipes()));
         
         // Set dynamic initials in the profile circle
         if (user != null && user.getUsername() != null) {
@@ -77,6 +95,41 @@ public class MainController {
         
         // Show recipes/dashboard by default
         showRecipes();
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
+    }
+
+    private int getUserRoomId(User user) {
+        if (user instanceof NormalStudent) {
+            return ((NormalStudent) user).getRoomId();
+        } else if (user instanceof RoomLeader) {
+            return ((RoomLeader) user).getRoomId();
+        }
+        return 0;
     }
 
     /** Navigation: go to Recipes/Dashboard. */
@@ -182,7 +235,7 @@ public class MainController {
         profileItem.setDisable(true);
         profileItem.setStyle("-fx-font-weight: bold; -fx-text-fill: #2D3748; -fx-padding: 6 12;");
         
-        javafx.scene.control.MenuItem logoutItem = new javafx.scene.control.MenuItem("Logout 🚪");
+        javafx.scene.control.MenuItem logoutItem = new javafx.scene.control.MenuItem("Logout");
         logoutItem.setStyle("-fx-text-fill: #E76F51; -fx-font-weight: bold; -fx-padding: 6 12;");
         logoutItem.setOnAction(e -> handleLogout());
         

@@ -24,52 +24,25 @@
     <!-- Main Workspace HBox -->
     <HBox spacing="20" VBox.vgrow="ALWAYS">
         
-        <!-- LEFT PANEL: Members List & Stats -->
-        <VBox spacing="16" prefWidth="320" minWidth="320" maxWidth="320">
+        <!-- LEFT PANEL: Members List & Announcement Board (Stacked sidebar) -->
+        <VBox spacing="16" prefWidth="320" minWidth="320" maxWidth="320" VBox.vgrow="ALWAYS">
             
-            <!-- Room Members Card -->
-            <VBox spacing="12" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);">
+            <!-- Room Members Card (Compact height) -->
+            <VBox spacing="12" prefHeight="220" minHeight="180" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);">
                 <Label text="Room Members" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
-                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent; -fx-max-height: 220;">
+                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
                     <VBox fx:id="membersBox" spacing="8" style="-fx-background-color: transparent;"/>
                 </ScrollPane>
             </VBox>
-            
-            <!-- Room Statistics Card -->
-            <VBox spacing="12" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);">
-                <Label text="Room Stats" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
-                
-                <GridPane hgap="12" vgap="12">
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="50"/>
-                        <ColumnConstraints percentWidth="50"/>
-                    </columnConstraints>
-                    
-                    <VBox spacing="4" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8px; -fx-padding: 8; -fx-alignment: center;" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                        <Label fx:id="statMembersCount" text="5" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #E76F51;"/>
-                        <Label text="Dormmates" style="-fx-font-size: 11px; -fx-text-fill: #718096;"/>
-                    </VBox>
-                    
-                    <VBox spacing="4" style="-fx-background-color: #FAFAFA; -fx-background-radius: 8px; -fx-padding: 8; -fx-alignment: center;" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                        <Label fx:id="statRecipesShared" text="8" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #E76F51;"/>
-                        <Label text="Recipes Shared" style="-fx-font-size: 11px; -fx-text-fill: #718096;"/>
-                    </VBox>
-                </GridPane>
-            </VBox>
-            
-        </VBox>
-        
-        <!-- RIGHT PANEL: Announcement Board & shared Chores -->
-        <VBox spacing="20" HBox.hgrow="ALWAYS">
-            
-            <!-- Dorm Announcements Board -->
-            <VBox spacing="12" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);" VBox.vgrow="ALWAYS">
+
+            <!-- Dorm Announcements Board Card (Takes remaining vertical space) -->
+            <VBox spacing="12" VBox.vgrow="ALWAYS" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);">
                 <Label text="Dorm Announcement Board" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
                 
                 <!-- Quick Post announcement row -->
                 <HBox spacing="10" alignment="CENTER_LEFT">
-                    <TextField fx:id="announcementInput" promptText="Post a cooking notice or announcement to your room..." HBox.hgrow="ALWAYS" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"/>
-                    <Button text="Post 📣" onAction="#handlePostAnnouncement" style="-fx-background-color: #E76F51; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px; -fx-padding: 8 16; -fx-cursor: hand;"/>
+                    <TextField fx:id="announcementInput" promptText="Post a notice..." HBox.hgrow="ALWAYS" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 10; -fx-font-size: 12px;"/>
+                    <Button text="Post 📣" onAction="#handlePostAnnouncement" style="-fx-background-color: #E76F51; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-cursor: hand; -fx-font-size: 12px;"/>
                 </HBox>
                 
                 <Separator style="-fx-opacity: 0.3;"/>
@@ -78,17 +51,27 @@
                     <VBox fx:id="announcementList" spacing="8" style="-fx-background-color: transparent; -fx-padding: 2 2 2 2;"/>
                 </ScrollPane>
             </VBox>
+        </VBox>
+        
+        <!-- RIGHT PANEL: Cooking Plan & Grocery Summary (Expanded center container) -->
+        <VBox spacing="20" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
             
-            <!-- Room Cooking Plan & Grocery Summary -->
-            <VBox spacing="12" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);" VBox.vgrow="ALWAYS">
-                <Label text="Room Cooking Plan &amp; Groceries Summary" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+            <!-- Room Cooking Plan & Grocery Summary Card -->
+            <VBox spacing="14" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Room Cooking Plan &amp; Groceries Summary" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2D3748;" HBox.hgrow="ALWAYS"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <DatePicker fx:id="planDatePicker" promptText="Schedule date" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-pref-width: 150px; -fx-cursor: hand;"/>
+                </HBox>
                 
-                <Label text="Selected Recipes for this Room:" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #E76F51;"/>
-                <Label fx:id="recipesSummaryLabel" text="No recipes selected. Go to 'Shopping Lists' to select!" style="-fx-font-size: 13px; -fx-text-fill: #4A5568; -fx-wrap-text: true;"/>
+                <VBox spacing="6">
+                    <Label text="Selected Recipes for this Room:" style="-fx-font-size: 12.5px; -fx-font-weight: bold; -fx-text-fill: #E76F51;"/>
+                    <Label fx:id="recipesSummaryLabel" text="No recipes selected. Go to 'Shopping Lists' to select!" style="-fx-font-size: 13.5px; -fx-text-fill: #4A5568; -fx-wrap-text: true; -fx-font-weight: 500;"/>
+                </VBox>
                 
                 <Separator style="-fx-opacity: 0.3;"/>
                 
-                <Label text="Consolidated Ingredients to Buy:" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #E76F51;"/>
+                <Label text="Consolidated Ingredients to Buy:" style="-fx-font-size: 12.5px; -fx-font-weight: bold; -fx-text-fill: #E76F51;"/>
                 <ListView fx:id="roomGroceriesListView" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent; -fx-padding: 0;"/>
             </VBox>
             

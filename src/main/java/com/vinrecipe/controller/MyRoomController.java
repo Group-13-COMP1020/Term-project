@@ -137,7 +137,7 @@ public class MyRoomController implements ContextAware {
 
     @FXML
     private void goBack() {
-        mainController.loadView("/fxml/views/DashboardView.fxml");
+        mainController.showRecipes();
     }
 }
 

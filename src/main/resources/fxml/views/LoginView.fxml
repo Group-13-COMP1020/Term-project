@@ -2,6 +2,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <HBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
@@ -27,9 +29,19 @@
         <VBox alignment="CENTER" spacing="16" maxWidth="360"
               style="-fx-padding: 32 48 32 48;">
 
+            <!-- Logo & Brand Header -->
+            <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 10 0;">
+                <ImageView fitHeight="36" fitWidth="36" preserveRatio="true">
+                    <image>
+                        <Image url="/images/logo.png"/>
+                    </image>
+                </ImageView>
+                <Label text="VinRECIPE" style="-fx-font-family: 'Georgia', serif; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
+            </HBox>
+
             <!-- Header labels -->
             <VBox spacing="4" alignment="CENTER_LEFT" styleClass="welcome-header">
-                <Label fx:id="welcomeTitle" text="Welcome Back! 👋" styleClass="form-welcome-title"/>
+                <Label fx:id="welcomeTitle" text="Welcome Back!" styleClass="form-welcome-title"/>
                 <Label fx:id="welcomeSubtitle" text="Please enter your details to sign in." styleClass="form-welcome-subtitle"/>
             </VBox>
 
@@ -40,7 +52,6 @@
                     <Label text="Username" styleClass="form-label"/>
                     <HBox styleClass="input-box-container" alignment="CENTER_LEFT">
                         <padding><Insets left="12" right="12"/></padding>
-                        <Label text="👤" styleClass="input-box-icon"/>
                         <TextField fx:id="usernameField" promptText="Enter your username" styleClass="form-field-embedded" HBox.hgrow="ALWAYS"/>
                     </HBox>
                 </VBox>
@@ -50,7 +61,6 @@
                     <Label text="Password" styleClass="form-label"/>
                     <HBox styleClass="input-box-container" alignment="CENTER_LEFT">
                         <padding><Insets left="12" right="12"/></padding>
-                        <Label text="🔒" styleClass="input-box-icon"/>
                         <PasswordField fx:id="passwordField" promptText="••••••••••••" styleClass="form-field-embedded" HBox.hgrow="ALWAYS"/>
                     </HBox>
                 </VBox>
@@ -62,9 +72,9 @@
                 <VBox spacing="8">
                     <Label text="Account Type" styleClass="form-label"/>
                     <HBox spacing="10" alignment="CENTER_LEFT">
-                        <ToggleButton fx:id="roleLeaderBtn" text="🏠 Room Leader" onAction="#handleRoleToggle"
+                        <ToggleButton fx:id="roleLeaderBtn" text="Room Leader" onAction="#handleRoleToggle"
                                       style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 16; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
-                        <ToggleButton fx:id="roleStudentBtn" text="🎓 Join a Room" onAction="#handleRoleToggle"
+                        <ToggleButton fx:id="roleStudentBtn" text="Join a Room" onAction="#handleRoleToggle"
                                       style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 16; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #4A5568; -fx-cursor: hand;"/>
                     </HBox>
                     <Label text="Leaders create a room. Members join with a code." style="-fx-font-size: 11px; -fx-text-fill: #9CA3AF;"/>
@@ -75,7 +85,6 @@
                     <Label text="Room Name" styleClass="form-label"/>
                     <HBox styleClass="input-box-container" alignment="CENTER_LEFT">
                         <padding><Insets left="12" right="12"/></padding>
-                        <Label text="🏠" styleClass="input-box-icon"/>
                         <TextField fx:id="roomNameField" promptText="e.g. VinUni Dorm A-101" styleClass="form-field-embedded" HBox.hgrow="ALWAYS"/>
                     </HBox>
                 </VBox>
@@ -85,7 +94,6 @@
                     <Label text="Access Code" styleClass="form-label"/>
                     <HBox styleClass="input-box-container" alignment="CENTER_LEFT">
                         <padding><Insets left="12" right="12"/></padding>
-                        <Label text="🔑" styleClass="input-box-icon"/>
                         <TextField fx:id="accessCodeField" promptText="6-char code from your leader" styleClass="form-field-embedded" HBox.hgrow="ALWAYS"
                                    style="-fx-font-family: 'Courier New', monospace; -fx-letter-spacing: 4;"/>
                     </HBox>

@@ -1,7 +1,6 @@
 package com.vinrecipe.controller;
 
-import com.vinrecipe.model.Recipe;
-import com.vinrecipe.model.User;
+import com.vinrecipe.model.*;
 import com.vinrecipe.service.RecipeService;
 import com.vinrecipe.service.SearchService;
 import javafx.collections.FXCollections;
@@ -9,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,7 +50,7 @@ public class DashboardController implements ContextAware {
     }
 
     private void loadRecipes() {
-        recipes = recipeService.getAllRecipes();
+        recipes = filterRecipesByRoom(recipeService.getAllRecipes());
         if (recipes.isEmpty()) {
             statusLabel.setText("No recipes yet. Click 'Add Recipe' to create one!");
         } else {
@@ -147,7 +147,42 @@ public class DashboardController implements ContextAware {
 
     @FXML
     private void handleRefresh() {
-        searchService.buildIndex(recipeService.getAllRecipes());
+        searchService.buildIndex(filterRecipesByRoom(recipeService.getAllRecipes()));
         loadRecipes();
+    }
+
+    private int getUserRoomId(User user) {
+        if (user instanceof NormalStudent) {
+            return ((NormalStudent) user).getRoomId();
+        } else if (user instanceof RoomLeader) {
+            return ((RoomLeader) user).getRoomId();
+        }
+        return 0;
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
     }
 }

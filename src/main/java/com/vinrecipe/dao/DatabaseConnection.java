@@ -185,6 +185,14 @@ public class DatabaseConnection {
 
             System.out.println("[DB Initialization] SQLite database structure verified.");
 
+            // Migration: Add plan_date column to shopping_lists if not exists
+            try {
+                stmt.execute("ALTER TABLE shopping_lists ADD COLUMN plan_date TEXT;");
+                System.out.println("[DB Initialization] Migration: Added plan_date column to shopping_lists table.");
+            } catch (SQLException e) {
+                // Column already exists, ignore
+            }
+
             // Check if seed data needs to be populated
             boolean isNewDatabase = true;
             try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users")) {

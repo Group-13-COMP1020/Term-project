@@ -19,6 +19,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +30,7 @@ public class RoomController implements ContextAware {
     @FXML private Label roomNameLabel;
     @FXML private Label roomSubtitleLabel;
     
-    // Stats labels
-    @FXML private Label statMembersCount;
-    @FXML private Label statRecipesShared;
+
 
     // Members list container
     @FXML private VBox membersBox;
@@ -43,6 +42,7 @@ public class RoomController implements ContextAware {
     // Cooking Plan & Groceries summary components
     @FXML private Label recipesSummaryLabel;
     @FXML private ListView<String> roomGroceriesListView;
+    @FXML private DatePicker planDatePicker;
 
     private User currentUser;
     private RecipeService recipeService;
@@ -52,7 +52,7 @@ public class RoomController implements ContextAware {
     private final UserDAO userDAO = new UserDAO();
     private final ShoppingListDAO shoppingListDAO = new ShoppingListDAO();
     private final ShoppingListService shoppingListService = new ShoppingListService();
-    private final ObservableList<String> announcements = FXCollections.observableArrayList();
+    private final ObservableList<UserDAO.Announcement> announcements = FXCollections.observableArrayList();
 
     @Override
     public void setContext(User currentUser, RecipeService recipeService,
@@ -61,6 +61,23 @@ public class RoomController implements ContextAware {
         this.recipeService  = recipeService;
         this.searchService  = searchService;
         this.mainController = mainController;
+
+        // Bind custom cell factory for groceries list view to guarantee high-fidelity visibility and bypass CSS overrides
+        roomGroceriesListView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    Label lbl = new Label(item);
+                    lbl.setStyle("-fx-font-size: 13.5px; -fx-text-fill: #2D3748; -fx-font-weight: 500;");
+                    setGraphic(lbl);
+                    setText(null);
+                }
+            }
+        });
 
         int roomId = getUserRoomId(currentUser);
         
@@ -72,10 +89,6 @@ public class RoomController implements ContextAware {
             
             List<User> members = userDAO.findByRoomId(roomId);
             renderMembers(members);
-            
-            // Set dynamic stats
-            statMembersCount.setText(String.valueOf(members.size()));
-            statRecipesShared.setText(String.valueOf(recipeService.getAllRecipes().size()));
             
         } catch (SQLException e) {
             e.printStackTrace();
@@ -90,15 +103,45 @@ public class RoomController implements ContextAware {
             e.printStackTrace();
             // Fallback default
             announcements.setAll(
-                "🍳 Trang is cooking Tofu wih Tomato Sauce on Tuesday!",
-                "🧄 Nguyen: \"Who bought garlic? We have plenty in the pantry!\"",
-                "🧹 Leader Nhan: \"Remember to wipe down the hotpot after usage.\""
+                new UserDAO.Announcement("🍳 Trang is cooking Tofu wih Tomato Sauce on Tuesday!", "2026-05-25 14:40:46"),
+                new UserDAO.Announcement("🧄 Nguyen: \"Who bought garlic? We have plenty in the pantry!\"", "2026-05-25 14:40:46"),
+                new UserDAO.Announcement("🧹 Leader Nhan: \"Remember to wipe down the hotpot after usage.\"", "2026-05-25 14:40:46")
             );
         }
         renderAnnouncements();
 
         // Load room cooking plan and groceries
         loadRoomCookingPlanAndGroceries(roomId);
+
+        // Load plan date and setup DatePicker listener
+        try {
+            int listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
+            String savedDateStr = shoppingListDAO.getPlanDate(listId);
+            if (savedDateStr != null && !savedDateStr.trim().isEmpty()) {
+                try {
+                    planDatePicker.setValue(LocalDate.parse(savedDateStr));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            
+            final int finalListId = listId;
+            planDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null) {
+                    try {
+                        shoppingListDAO.updatePlanDate(finalListId, newVal.toString());
+                        postPlanDateAnnouncement(newVal.toString());
+                        // Refresh announcements dynamically in memory!
+                        announcements.setAll(userDAO.getAnnouncements(roomId));
+                        renderAnnouncements();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private int getUserRoomId(User user) {
@@ -182,21 +225,59 @@ public class RoomController implements ContextAware {
 
     private void renderAnnouncements() {
         announcementList.getChildren().clear();
-        for (String msg : announcements) {
-            Label lbl = new Label(msg);
-            lbl.setStyle(
-                "-fx-font-size: 13px; " +
-                "-fx-text-fill: #2D3748; " +
+        for (UserDAO.Announcement a : announcements) {
+            VBox card = new VBox(6);
+            card.setStyle(
                 "-fx-background-color: #FFFDF9; " +
                 "-fx-border-color: #FFE0CC; " +
                 "-fx-border-width: 1px; " +
-                "-fx-border-radius: 8px; " +
-                "-fx-background-radius: 8px; " +
-                "-fx-padding: 10 14; " +
+                "-fx-border-radius: 12px; " +
+                "-fx-background-radius: 12px; " +
+                "-fx-padding: 12 16; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.01), 6, 0, 0, 1);"
+            );
+            card.setMaxWidth(Double.MAX_VALUE);
+
+            Label msgLabel = new Label(a.getMessage());
+            msgLabel.setStyle(
+                "-fx-font-size: 13.5px; " +
+                "-fx-text-fill: #2D3748; " +
                 "-fx-wrap-text: true;"
             );
-            lbl.setMaxWidth(Double.MAX_VALUE);
-            announcementList.getChildren().add(0, lbl); // new ones on top
+            msgLabel.setMaxWidth(Double.MAX_VALUE);
+
+            String timeStr = formatTimestamp(a.getCreatedAt());
+            Label timeLabel = new Label("• " + timeStr);
+            timeLabel.setStyle(
+                "-fx-font-size: 10.5px; " +
+                "-fx-text-fill: #A0AEC0; " +
+                "-fx-font-weight: 500;"
+            );
+
+            HBox bottomRow = new HBox();
+            bottomRow.setAlignment(Pos.CENTER_RIGHT);
+            bottomRow.getChildren().add(timeLabel);
+
+            card.getChildren().addAll(msgLabel, bottomRow);
+            announcementList.getChildren().add(0, card); // new ones on top
+        }
+    }
+
+    private String formatTimestamp(String rawTimestamp) {
+        if (rawTimestamp == null || rawTimestamp.isEmpty()) {
+            return "Just now";
+        }
+        try {
+            String clean = rawTimestamp.replace(" ", "T");
+            if (!clean.contains("T")) {
+                return rawTimestamp;
+            }
+            java.time.LocalDateTime ldt = java.time.LocalDateTime.parse(clean);
+            java.time.format.DateTimeFormatter formatter = 
+                java.time.format.DateTimeFormatter.ofPattern("MMM dd, HH:mm");
+            return ldt.format(formatter);
+        } catch (Exception e) {
+            return rawTimestamp;
         }
     }
 
@@ -208,15 +289,18 @@ public class RoomController implements ContextAware {
             String formattedMsg = "📣 " + author + ": \"" + msg + "\"";
             
             int roomId = getUserRoomId(currentUser);
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String nowStr = java.time.LocalDateTime.now().format(formatter);
+            
             try {
                 userDAO.insertAnnouncement(roomId, currentUser.getUserId(), formattedMsg);
-                announcements.add(formattedMsg);
+                announcements.add(new UserDAO.Announcement(formattedMsg, nowStr));
                 announcementInput.clear();
                 renderAnnouncements();
             } catch (SQLException e) {
                 e.printStackTrace();
                 // Fallback to local
-                announcements.add(formattedMsg);
+                announcements.add(new UserDAO.Announcement(formattedMsg, nowStr));
                 announcementInput.clear();
                 renderAnnouncements();
             }
@@ -292,5 +376,55 @@ public class RoomController implements ContextAware {
         if (name.contains("pasta") || name.contains("noodle")) return "🍝";
         if (name.contains("sauce") || name.contains("vinegar") || name.contains("oil")) return "🍶";
         return "🛒";
+    }
+
+    private void postPlanDateAnnouncement(String targetDate) {
+        try {
+            int roomId = getUserRoomId(currentUser);
+            if (roomId > 0) {
+                int listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
+                List<Recipe> selected = shoppingListDAO.getSelectedRecipes(listId, recipeService);
+                
+                String scheduleMsg;
+                if (selected.isEmpty()) {
+                    scheduleMsg = String.format("📅 %s updated the room cooking plan target date to %s.", 
+                        currentUser.getUsername(), targetDate);
+                } else {
+                    String recipesStr = selected.stream().map(Recipe::getTitle).collect(Collectors.joining(", "));
+                    scheduleMsg = String.format("📅 %s scheduled a cooking plan for %s! Selected: %s", 
+                        currentUser.getUsername(), targetDate, recipesStr);
+                }
+                
+                userDAO.insertAnnouncement(roomId, currentUser.getUserId(), scheduleMsg);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<Recipe> filterRecipesByRoom(List<Recipe> recipes) {
+        if (recipes == null) return new ArrayList<>();
+        if (currentUser instanceof Admin) {
+            return new ArrayList<>(recipes);
+        }
+        
+        int userRoomId = getUserRoomId(currentUser);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe r : recipes) {
+            boolean isDefault = r.getRecipeId() <= 30 
+                    || r.getAuthor() == null 
+                    || "ADMIN".equalsIgnoreCase(r.getAuthor().getRole());
+            
+            if (isDefault) {
+                filtered.add(r);
+                continue;
+            }
+            
+            int authorRoomId = getUserRoomId(r.getAuthor());
+            if (userRoomId != 0 && userRoomId == authorRoomId) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
     }
 }

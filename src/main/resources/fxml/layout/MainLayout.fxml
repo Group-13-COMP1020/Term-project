@@ -2,6 +2,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -16,22 +18,22 @@
             <padding><Insets left="24" right="24" top="0" bottom="0"/></padding>
             
             <!-- Brand Logo -->
-            <Label text="VinRECIPE" styleClass="header-brand"/>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <ImageView fitHeight="32" fitWidth="32" preserveRatio="true">
+                    <image>
+                        <Image url="/images/logo.png"/>
+                    </image>
+                </ImageView>
+                <Label text="VinRECIPE" styleClass="header-brand"/>
+            </HBox>
             
             <Region HBox.hgrow="ALWAYS"/>
             
-            <!-- Search & Filter Bar -->
+            <!-- Search Bar -->
             <HBox styleClass="header-search-container" alignment="CENTER_LEFT" spacing="8" prefWidth="480">
                 <padding><Insets left="14" right="14"/></padding>
-                <Label text="🔍" style="-fx-text-fill: #A0AEC0; -fx-font-size: 14px;"/>
                 <TextField fx:id="topSearchField" promptText="Search recipe, ingredients or meal ideas..." styleClass="header-search-field" HBox.hgrow="ALWAYS"/>
             </HBox>
-            
-            <Button text="Filter" styleClass="header-filter-btn" onAction="#showRecipes">
-                <graphic>
-                    <Label text="⛛" style="-fx-font-size: 12px; -fx-text-fill: #E76F51; -fx-font-weight: bold;"/>
-                </graphic>
-            </Button>
             
             <Region HBox.hgrow="ALWAYS"/>
             
@@ -49,19 +51,19 @@
 
             <!-- Navigation Buttons -->
             <VBox spacing="6" styleClass="sidebar-nav" VBox.vgrow="ALWAYS">
-                <Button text="⛃  Dashboard" styleClass="nav-btn, nav-btn-active"
+                <Button text="Dashboard" styleClass="nav-btn, nav-btn-active"
                         maxWidth="Infinity" onAction="#showRecipes"
                         fx:id="dashboardBtn"/>
 
-                <Button text="👤  My Room" styleClass="nav-btn"
+                <Button text="My Room" styleClass="nav-btn"
                         maxWidth="Infinity" onAction="#showRoom"
                         fx:id="roomBtn"/>
 
-                <Button text="🛒  Shopping Lists" styleClass="nav-btn"
+                <Button text="Shopping Lists" styleClass="nav-btn"
                         maxWidth="Infinity" onAction="#showShoppingList"
                         fx:id="shoppingBtn"/>
 
-                <Button text="🛡️  Admin Panel" styleClass="nav-btn"
+                <Button text="Admin Panel" styleClass="nav-btn"
                         maxWidth="Infinity" onAction="#showAdminPanel"
                         fx:id="adminBtn" managed="false" visible="false"/>
             </VBox>

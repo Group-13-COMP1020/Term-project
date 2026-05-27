@@ -62,17 +62,11 @@
                                style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
                                GridPane.columnIndex="3" GridPane.rowIndex="1"/>
 
-                    <!-- Servings -->
-                    <Label text="Servings *" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                    <TextField fx:id="servingsField" promptText="e.g. 2"
-                               style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
-                               GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-
                     <!-- Image URL -->
-                    <Label text="Image URL (optional)" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                    <Label text="Image URL (optional)" style="-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #4A5568;" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
                     <TextField fx:id="imageUrlField" promptText="e.g. /images/beef_pho.png or web link"
                                style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-font-size: 13px;"
-                               GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                               GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="3"/>
                 </GridPane>
             </VBox>
 
