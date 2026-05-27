@@ -208,4 +208,30 @@ public class UserDAO {
         }
         return list;
     }
+
+    /** Delete user by ID. Admin power. */
+    public boolean deleteUser(int userId) throws SQLException {
+        String sql = "DELETE FROM users WHERE user_id = ?";
+        Connection conn = DatabaseConnection.getInstance();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    /** Update user role and room. Admin power. */
+    public boolean updateUserRole(int userId, String role, int roomId) throws SQLException {
+        String sql = "UPDATE users SET role = ?, room_id = ? WHERE user_id = ?";
+        Connection conn = DatabaseConnection.getInstance();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, role);
+            if (roomId <= 0) {
+                stmt.setNull(2, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(2, roomId);
+            }
+            stmt.setInt(3, userId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
 }

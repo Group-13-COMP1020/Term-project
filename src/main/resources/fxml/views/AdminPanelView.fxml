@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.vinrecipe.controller.AdminPanelController"
+      spacing="16"
+      style="-fx-background-color: #FAFAFA;">
+
+    <padding><Insets top="20" bottom="20" left="24" right="24"/></padding>
+
+    <!-- Header Action Bar -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label text="Admin Control Panel 🛡️" style="-fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
+            <Label text="Monitor accounts, manage roles, and review ecosystem metrics." style="-fx-font-size: 12px; -fx-text-fill: #718096;"/>
+        </VBox>
+    </HBox>
+
+    <Separator style="-fx-opacity: 0.3;"/>
+
+    <Label fx:id="statusLabel" style="-fx-text-fill: #27AE60; -fx-font-weight: bold; -fx-font-size: 13px;" wrapText="true"/>
+
+    <!-- KPI Summary Row -->
+    <GridPane hgap="16" vgap="16">
+        <columnConstraints>
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="33.3"/>
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="33.3"/>
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="33.3"/>
+        </columnConstraints>
+
+        <!-- KPI 1: Users -->
+        <VBox spacing="6" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-padding: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);" GridPane.columnIndex="0">
+            <Label text="Total Registered Users 👥" style="-fx-font-size: 12px; -fx-text-fill: #718096; -fx-font-weight: 600;"/>
+            <Label fx:id="kpiTotalUsers" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #E76F51;"/>
+        </VBox>
+
+        <!-- KPI 2: Rooms -->
+        <VBox spacing="6" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-padding: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);" GridPane.columnIndex="1">
+            <Label text="Active Dorm Rooms 🏠" style="-fx-font-size: 12px; -fx-text-fill: #718096; -fx-font-weight: 600;"/>
+            <Label fx:id="kpiTotalRooms" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #27AE60;"/>
+        </VBox>
+
+        <!-- KPI 3: Recipes -->
+        <VBox spacing="6" style="-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-padding: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);" GridPane.columnIndex="2">
+            <Label text="Seeded Recipes 🍳" style="-fx-font-size: 12px; -fx-text-fill: #718096; -fx-font-weight: 600;"/>
+            <Label fx:id="kpiTotalRecipes" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2B6CB0;"/>
+        </VBox>
+    </GridPane>
+
+    <!-- Main Workspace splits into Directory and Moderation Panel -->
+    <HBox spacing="16" VBox.vgrow="ALWAYS">
+        
+        <!-- Left: Users Directory -->
+        <VBox spacing="10" HBox.hgrow="ALWAYS" style="-fx-background-color: #FFFFFF; -fx-background-radius: 14px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);">
+            <Label text="User Accounts Directory 👥" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+            
+            <TableView fx:id="userTable" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #E2E8F0; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 2;">
+                <columns>
+                    <TableColumn fx:id="colUserId" text="ID" prefWidth="50"/>
+                    <TableColumn fx:id="colUsername" text="Username" prefWidth="130"/>
+                    <TableColumn fx:id="colEmail" text="Email" prefWidth="180"/>
+                    <TableColumn fx:id="colRole" text="Role" prefWidth="130"/>
+                    <TableColumn fx:id="colRoom" text="Room ID / Name" prefWidth="130"/>
+                </columns>
+                <placeholder>
+                    <Label text="No users registered in the database." style="-fx-text-fill: #94A3B8; -fx-font-size: 12px;"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Right: Account Moderation Panel -->
+        <VBox spacing="16" prefWidth="300" style="-fx-background-color: #FFFFFF; -fx-background-radius: 14px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);">
+            <Label text="Account Moderation 🛠️" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+            
+            <VBox spacing="14" fx:id="editorContainer" disable="true" VBox.vgrow="ALWAYS">
+                <VBox spacing="6">
+                    <Label text="Selected Account Username" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #718096;"/>
+                    <Label fx:id="selectedUserLabel" text="No User Selected" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+                </VBox>
+
+                <Separator style="-fx-opacity: 0.3;"/>
+
+                <!-- Role dropdown selection -->
+                <VBox spacing="6">
+                    <Label text="Assigned Security Role" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #718096;"/>
+                    <ComboBox fx:id="roleCombo" maxWidth="Infinity" style="-fx-background-color: #F8FAFC; -fx-border-color: #CBD5E1; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 2 4;"/>
+                </VBox>
+
+                <!-- Room ID textfield -->
+                <VBox spacing="6">
+                    <Label text="Room Assignment (Room ID, 0 = None)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #718096;"/>
+                    <TextField fx:id="roomIdField" promptText="e.g. 1" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 8 10; -fx-font-size: 12px;"/>
+                </VBox>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <!-- Action buttons -->
+                <Button text="✓ Save Account Changes" onAction="#handleSaveUser" maxWidth="Infinity"
+                        style="-fx-background-color: #E76F51; -fx-background-radius: 8px; -fx-padding: 10; -fx-font-weight: bold; -fx-text-fill: white; -fx-cursor: hand;"/>
+                
+                <Button text="🗑️ Delete Account Permanently" onAction="#handleDeleteUser" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-border-color: #E76F51; -fx-border-radius: 8px; -fx-padding: 8; -fx-font-weight: bold; -fx-text-fill: #E76F51; -fx-cursor: hand;"/>
+            </VBox>
+
+            <VBox fx:id="placeholderContainer" alignment="CENTER" spacing="10" VBox.vgrow="ALWAYS">
+                <Label text="🔒" style="-fx-font-size: 32px;"/>
+                <Label text="Select an account from the left directory to enable moderation controls." style="-fx-text-fill: #A0AEC0; -fx-font-size: 11px; -fx-alignment: center; -fx-text-alignment: center;" wrapText="true"/>
+            </VBox>
+        </VBox>
+    </HBox>
+</VBox>

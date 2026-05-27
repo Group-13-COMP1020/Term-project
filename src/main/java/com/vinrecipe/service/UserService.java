@@ -151,4 +151,34 @@ public class UserService {
         }
         return sb.toString();
     }
+
+    /** Admin power: Get all users. */
+    public java.util.List<User> getAllUsers() {
+        try {
+            return userDAO.findAll();
+        } catch (SQLException e) {
+            System.err.println("[UserService] getAllUsers error: " + e.getMessage());
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    /** Admin power: Delete a user by ID. */
+    public boolean deleteUser(int userId) {
+        try {
+            return userDAO.deleteUser(userId);
+        } catch (SQLException e) {
+            System.err.println("[UserService] deleteUser error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Admin power: Update user role and room. */
+    public boolean updateUserRole(int userId, String role, int roomId) {
+        try {
+            return userDAO.updateUserRole(userId, role, roomId);
+        } catch (SQLException e) {
+            System.err.println("[UserService] updateUserRole error: " + e.getMessage());
+            return false;
+        }
+    }
 }

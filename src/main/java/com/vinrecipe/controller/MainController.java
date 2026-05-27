@@ -34,6 +34,7 @@ public class MainController {
     @FXML private Button dashboardBtn;
     @FXML private Button roomBtn;
     @FXML private Button shoppingBtn;
+    @FXML private Button adminBtn;
 
     private User currentUser;
     private final RecipeService recipeService = new RecipeService();
@@ -68,6 +69,12 @@ public class MainController {
             profileCircleLabel.setText(initials);
         }
         
+        // Enable Admin button conditionally
+        if (user instanceof com.vinrecipe.model.Admin) {
+            adminBtn.setVisible(true);
+            adminBtn.setManaged(true);
+        }
+        
         // Show recipes/dashboard by default
         showRecipes();
     }
@@ -91,6 +98,13 @@ public class MainController {
     private void showShoppingList() {
         loadView("/fxml/views/ShoppingListView.fxml");
         setActiveButton(shoppingBtn);
+    }
+
+    /** Navigation: go to Admin Control Panel. */
+    @FXML
+    private void showAdminPanel() {
+        loadView("/fxml/views/AdminPanelView.fxml");
+        setActiveButton(adminBtn);
     }
 
 
@@ -134,7 +148,7 @@ public class MainController {
     }
 
     private void setActiveButton(Button activeBtn) {
-        Button[] btns = {dashboardBtn, roomBtn, shoppingBtn};
+        Button[] btns = {dashboardBtn, roomBtn, shoppingBtn, adminBtn};
         for (Button btn : btns) {
             if (btn != null) {
                 btn.getStyleClass().remove("nav-btn-active");

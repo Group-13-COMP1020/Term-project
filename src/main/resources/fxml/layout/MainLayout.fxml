@@ -60,6 +60,10 @@
                 <Button text="🛒  Shopping Lists" styleClass="nav-btn"
                         maxWidth="Infinity" onAction="#showShoppingList"
                         fx:id="shoppingBtn"/>
+
+                <Button text="🛡️  Admin Panel" styleClass="nav-btn"
+                        maxWidth="Infinity" onAction="#showAdminPanel"
+                        fx:id="adminBtn" managed="false" visible="false"/>
             </VBox>
 
             <Separator styleClass="sidebar-separator" style="-fx-padding: 8 0 8 0;"/>
