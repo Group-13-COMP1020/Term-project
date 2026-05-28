@@ -16,6 +16,7 @@ mariadb-portable/
 mariadb.zip
 maven.zip
 *.zip
+*.local-before-pull.db
 
 # IDE specific
 .idea/

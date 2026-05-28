@@ -318,47 +318,6 @@ public class ShoppingListController implements ContextAware {
         }
     }
 
-    private String getCategoryForIngredient(String name) {
-        name = name.toLowerCase().trim();
-        if (name.contains("egg") || name.contains("chicken") || name.contains("beef") || name.contains("steak")
-                || name.contains("pork") || name.contains("ribs") || name.contains("tofu")) return "Protein";
-        if (name.contains("rice") || name.contains("bread") || name.contains("toast")
-                || name.contains("pasta") || name.contains("noodle") || name.contains("vermicelli")) return "Grain";
-        if (name.contains("milk") || name.contains("cream") || name.contains("cheese") || name.contains("butter")) return "Dairy";
-        if (name.contains("salt") || name.contains("pepper") || name.contains("sugar") || name.contains("spice")
-                || name.contains("sauce") || name.contains("vinegar") || name.contains("oil") || name.contains("paste")) return "Pantry";
-        if (name.contains("apple") || name.contains("fruit") || name.contains("avocado") || name.contains("tomato")
-                || name.contains("pumpkin") || name.contains("pickle") || name.contains("seaweed") || name.contains("onion")
-                || name.contains("garlic") || name.contains("scallion") || name.contains("spinach")
-                || name.contains("carrot") || name.contains("vegetable") || name.contains("herb")) return "Produce";
-        return "Other";
-    }
-
-    private String getCategoryBadgeStyle(String category) {
-        String color = switch (category) {
-            case "Protein" -> "#D94841";
-            case "Grain" -> "#B7791F";
-            case "Produce" -> "#2F855A";
-            case "Dairy" -> "#2B6CB0";
-            case "Pantry" -> "#6B46C1";
-            default -> "#4A5568";
-        };
-        String background = switch (category) {
-            case "Protein" -> "#FDEDEC";
-            case "Grain" -> "#FFF7E6";
-            case "Produce" -> "#EAF7EF";
-            case "Dairy" -> "#EAF2FF";
-            case "Pantry" -> "#F1ECFF";
-            default -> "#EDF2F7";
-        };
-        return "-fx-background-color: " + background + "; " +
-               "-fx-text-fill: " + color + "; " +
-               "-fx-font-size: 10px; " +
-               "-fx-font-weight: bold; " +
-               "-fx-background-radius: 999px; " +
-               "-fx-padding: 3 8;";
-    }
-
     @FXML
     private void handleAddItem() {
         TextInputDialog dialog = new TextInputDialog();
@@ -600,7 +559,6 @@ public class ShoppingListController implements ContextAware {
         private final Label checkMark = new Label();
         private final VBox textContainer = new VBox(2);
         private final HBox nameRow = new HBox(6);
-        private final Label categoryBadge = new Label();
         private final Label itemName = new Label();
         private final Label itemQty = new Label();
         private final Region spacer = new Region();
@@ -618,10 +576,8 @@ public class ShoppingListController implements ContextAware {
             checkCircle.getChildren().add(checkMark);
             
             nameRow.setAlignment(Pos.CENTER_LEFT);
-            categoryBadge.setMinWidth(68);
-            categoryBadge.setAlignment(Pos.CENTER);
             itemName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2D3748;");
-            nameRow.getChildren().addAll(categoryBadge, itemName);
+            nameRow.getChildren().add(itemName);
             
             itemQty.setStyle("-fx-font-size: 11px; -fx-text-fill: #718096;");
             textContainer.getChildren().addAll(nameRow, itemQty);
@@ -669,10 +625,6 @@ public class ShoppingListController implements ContextAware {
             } else {
                 itemName.setText(item.getName());
                 itemQty.setText(String.format("%.1f %s", item.getQuantity(), item.getUnit()));
-                String category = getCategoryForIngredient(item.getName());
-                categoryBadge.setText(category);
-                categoryBadge.setStyle(getCategoryBadgeStyle(category));
-                
                 if (item.isChecked()) {
                     checkCircle.setStyle(
                         "-fx-background-color: #E76F51; " +

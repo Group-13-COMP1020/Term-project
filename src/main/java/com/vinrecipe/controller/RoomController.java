@@ -64,7 +64,7 @@ public class RoomController implements ContextAware {
         this.searchService  = searchService;
         this.mainController = mainController;
 
-        // Bind custom cell factory for groceries list view to avoid unreliable emoji glyphs.
+        // Bind custom cell factory for groceries list view to keep items aligned.
         roomGroceriesListView.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -73,16 +73,10 @@ public class RoomController implements ContextAware {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    String[] parts = item.split("\\|", 4);
-                    String category = parts.length > 0 ? parts[0] : "Other";
-                    String name = parts.length > 1 ? parts[1] : item;
-                    String amount = parts.length > 2 ? parts[2] : "";
-                    String unit = parts.length > 3 ? parts[3] : "";
-
-                    Label badge = new Label(category);
-                    badge.setMinWidth(72);
-                    badge.setAlignment(Pos.CENTER);
-                    badge.setStyle(getCategoryBadgeStyle(category));
+                    String[] parts = item.split("\\|", 3);
+                    String name = parts.length > 0 ? parts[0] : item;
+                    String amount = parts.length > 1 ? parts[1] : "";
+                    String unit = parts.length > 2 ? parts[2] : "";
 
                     Label itemName = new Label(name);
                     itemName.setStyle("-fx-font-size: 13.5px; -fx-text-fill: #2D3748; -fx-font-weight: 600;");
@@ -92,7 +86,7 @@ public class RoomController implements ContextAware {
 
                     Region spacer = new Region();
                     HBox.setHgrow(spacer, Priority.ALWAYS);
-                    HBox row = new HBox(10, badge, itemName, spacer, itemAmount);
+                    HBox row = new HBox(10, itemName, spacer, itemAmount);
                     row.setAlignment(Pos.CENTER_LEFT);
                     row.setPadding(new Insets(4, 0, 4, 0));
                     setGraphic(row);
@@ -378,8 +372,7 @@ public class RoomController implements ContextAware {
                 String name = entry.getKey();
                 double qty = entry.getValue();
                 String unit = units.getOrDefault(name, "");
-                String category = getCategoryForIngredient(name);
-                displayList.add(String.format("%s|%s|%.1f|%s", category, capitalize(name), qty, unit));
+                displayList.add(String.format("%s|%.1f|%s", capitalize(name), qty, unit));
             }
             
             // Sort alphabetically
@@ -396,47 +389,6 @@ public class RoomController implements ContextAware {
     private String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
-
-    private String getCategoryForIngredient(String name) {
-        name = name.toLowerCase().trim();
-        if (name.contains("egg") || name.contains("chicken") || name.contains("beef") || name.contains("steak")
-                || name.contains("pork") || name.contains("ribs") || name.contains("tofu")) return "Protein";
-        if (name.contains("rice") || name.contains("bread") || name.contains("toast")
-                || name.contains("pasta") || name.contains("noodle") || name.contains("vermicelli")) return "Grain";
-        if (name.contains("milk") || name.contains("cream") || name.contains("cheese") || name.contains("butter")) return "Dairy";
-        if (name.contains("salt") || name.contains("pepper") || name.contains("sugar") || name.contains("spice")
-                || name.contains("sauce") || name.contains("vinegar") || name.contains("oil") || name.contains("paste")) return "Pantry";
-        if (name.contains("apple") || name.contains("fruit") || name.contains("avocado") || name.contains("tomato")
-                || name.contains("pumpkin") || name.contains("pickle") || name.contains("seaweed") || name.contains("onion")
-                || name.contains("garlic") || name.contains("scallion") || name.contains("spinach")
-                || name.contains("carrot") || name.contains("vegetable") || name.contains("herb")) return "Produce";
-        return "Other";
-    }
-
-    private String getCategoryBadgeStyle(String category) {
-        String color = switch (category) {
-            case "Protein" -> "#D94841";
-            case "Grain" -> "#B7791F";
-            case "Produce" -> "#2F855A";
-            case "Dairy" -> "#2B6CB0";
-            case "Pantry" -> "#6B46C1";
-            default -> "#4A5568";
-        };
-        String background = switch (category) {
-            case "Protein" -> "#FDEDEC";
-            case "Grain" -> "#FFF7E6";
-            case "Produce" -> "#EAF7EF";
-            case "Dairy" -> "#EAF2FF";
-            case "Pantry" -> "#F1ECFF";
-            default -> "#EDF2F7";
-        };
-        return "-fx-background-color: " + background + "; " +
-               "-fx-text-fill: " + color + "; " +
-               "-fx-font-size: 10.5px; " +
-               "-fx-font-weight: bold; " +
-               "-fx-background-radius: 999px; " +
-               "-fx-padding: 3 8;";
     }
 
     private String getAnnouncementType(String message) {
