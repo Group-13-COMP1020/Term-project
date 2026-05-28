@@ -8,7 +8,9 @@ import com.vinrecipe.service.ShoppingListService;
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import javafx.geometry.Insets;
+import javafx.util.StringConverter;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -28,7 +30,7 @@ import java.util.stream.Collectors;
 
 /**
  * Redesigned Controller for ShoppingListView.fxml.
- * Beautifully aggregates ingredients, categorizes with grocery emojis,
+ * Aggregates ingredients and categorizes grocery items,
  * offers gamified completion tracking for lower attention span,
  * and maintains full room-wide persistent database sync.
  */
@@ -55,6 +57,7 @@ public class ShoppingListController implements ContextAware {
     private final ShoppingListService shoppingListService = new ShoppingListService();
     private final ShoppingListDAO shoppingListDAO = new ShoppingListDAO();
     private int listId = -1;
+    private LocalDate currentPlanDate = LocalDate.now();
 
     // Custom robust selection set to bypass JavaFX ListView multiple-selection event conflicts
     private final Set<Integer> selectedRecipeIds = new HashSet<>();
@@ -100,26 +103,43 @@ public class ShoppingListController implements ContextAware {
         int roomId = getUserRoomId(currentUser);
         try {
             this.listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
-            List<Recipe> savedRecipes = shoppingListDAO.getSelectedRecipes(listId, recipeService);
-            
-            setupRecipeList(savedRecipes);
 
-            // Load and bind plan date picker
+            // Determine current plan date (saved or today)
             String savedDateStr = shoppingListDAO.getPlanDate(listId);
             if (savedDateStr != null && !savedDateStr.trim().isEmpty()) {
-                try {
-                    planDatePicker.setValue(LocalDate.parse(savedDateStr));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                try { currentPlanDate = LocalDate.parse(savedDateStr); } catch (Exception ex) { ex.printStackTrace(); }
             }
-            
+
+            // Load recipes for that date
+            List<Recipe> savedRecipes = shoppingListDAO.getSelectedRecipesByDate(listId, currentPlanDate.toString(), recipeService);
+            setupRecipeList(savedRecipes);
+
+            // Bind date picker display format
+            DateTimeFormatter displayFmt = DateTimeFormatter.ofPattern("MMM d, yyyy");
+            planDatePicker.setConverter(new StringConverter<LocalDate>() {
+                @Override public String toString(LocalDate d) {
+                    return d == null ? "" : d.format(displayFmt);
+                }
+                @Override public LocalDate fromString(String s) {
+                    if (s == null || s.trim().isEmpty()) return null;
+                    try { return LocalDate.parse(s, displayFmt); } catch (Exception e) { return null; }
+                }
+            });
+            planDatePicker.setValue(currentPlanDate);
+
             final int finalListId = listId;
             planDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null) {
+                    currentPlanDate = newVal;
                     try {
                         shoppingListDAO.updatePlanDate(finalListId, newVal.toString());
-                        postPlanDateAnnouncement(newVal.toString());
+                        postPlanDateAnnouncement(newVal);
+                        // Load this date's recipe selections
+                        List<Recipe> dateRecipes = shoppingListDAO.getSelectedRecipesByDate(finalListId, newVal.toString(), recipeService);
+                        selectedRecipeIds.clear();
+                        for (Recipe r : dateRecipes) selectedRecipeIds.add(r.getRecipeId());
+                        recipeListView.refresh();
+                        handleGenerate();
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
@@ -132,10 +152,10 @@ public class ShoppingListController implements ContextAware {
                 instructionLabel.setText("Select recipes on the left to start");
                 totalPriceLabel.setText("Estimated total: 0 VND");
                 if (completionProgress != null) completionProgress.setProgress(0.0);
-                if (motivationLabel != null) motivationLabel.setText("Select recipes to start! 🍳");
+                if (motivationLabel != null) motivationLabel.setText("Select recipes to start");
             }
         } catch (SQLException e) {
-            instructionLabel.setText("⚠ Database error loading shopping list: " + e.getMessage());
+            instructionLabel.setText("Database error loading shopping list: " + e.getMessage());
             e.printStackTrace();
             setupRecipeList(new ArrayList<>());
         }
@@ -204,10 +224,10 @@ public class ShoppingListController implements ContextAware {
             totalPriceLabel.setText("Estimated total: 0 VND");
             suggestionBox.setVisible(false);
             if (completionProgress != null) completionProgress.setProgress(0.0);
-            if (motivationLabel != null) motivationLabel.setText("Select recipes to start! 🍳");
+            if (motivationLabel != null) motivationLabel.setText("Select recipes to start");
             try {
                 if (listId != -1) {
-                    shoppingListDAO.clearSelectedRecipes(listId);
+                    shoppingListDAO.clearSelectedRecipesByDate(listId, currentPlanDate.toString());
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -215,11 +235,11 @@ public class ShoppingListController implements ContextAware {
             return;
         }
 
-        // Save selected recipes in DB
+        // Save selected recipes in DB for current date
         if (listId != -1) {
             List<Integer> selectedIds = selected.stream().map(Recipe::getRecipeId).toList();
             try {
-                shoppingListDAO.saveSelectedRecipes(listId, selectedIds);
+                shoppingListDAO.saveSelectedRecipesByDate(listId, currentPlanDate.toString(), selectedIds);
             } catch (SQLException e) {
                 System.err.println("[ShoppingListController] Error saving list selections: " + e.getMessage());
             }
@@ -278,7 +298,7 @@ public class ShoppingListController implements ContextAware {
         List<ShoppingListItem> items = shoppingListView.getItems();
         if (items.isEmpty()) {
             if (completionProgress != null) completionProgress.setProgress(0.0);
-            if (motivationLabel != null) motivationLabel.setText("Select recipes to start! 🍳");
+            if (motivationLabel != null) motivationLabel.setText("Select recipes to start");
             return;
         }
         long checkedCount = items.stream().filter(ShoppingListItem::isChecked).count();
@@ -287,40 +307,56 @@ public class ShoppingListController implements ContextAware {
         
         if (motivationLabel != null) {
             if (checkedCount == 0) {
-                motivationLabel.setText("Let's get shopping! 🛒");
+                motivationLabel.setText("Ready to shop");
             } else if (percent < 0.5) {
-                motivationLabel.setText("Off to a great start! 🚀 (" + checkedCount + "/" + items.size() + ")");
+                motivationLabel.setText("Started (" + checkedCount + "/" + items.size() + ")");
             } else if (percent < 1.0) {
-                motivationLabel.setText("Over halfway there! 🍳 (" + checkedCount + "/" + items.size() + ")");
+                motivationLabel.setText("Over halfway (" + checkedCount + "/" + items.size() + ")");
             } else {
-                motivationLabel.setText("All done! Ready to cook! 🎉");
+                motivationLabel.setText("All items checked");
             }
         }
     }
 
-    private String getEmojiForIngredient(String name) {
+    private String getCategoryForIngredient(String name) {
         name = name.toLowerCase().trim();
-        if (name.contains("apple") || name.contains("fruit")) return "🍎";
-        if (name.contains("avocado")) return "🥑";
-        if (name.contains("egg")) return "🥚";
-        if (name.contains("bread") || name.contains("toast")) return "🍞";
-        if (name.contains("chicken")) return "🍗";
-        if (name.contains("beef") || name.contains("steak")) return "🥩";
-        if (name.contains("pork") || name.contains("ribs")) return "🥓";
-        if (name.contains("potato") || name.contains("fry") || name.contains("fries")) return "🍟";
-        if (name.contains("tofu")) return "🍲";
-        if (name.contains("tomato")) return "🍅";
-        if (name.contains("pumpkin") || name.contains("soup")) return "🎃";
-        if (name.contains("rice")) return "🍚";
-        if (name.contains("pickle")) return "🥒";
-        if (name.contains("gimbap") || name.contains("seaweed") || name.contains("roll")) return "🍣";
-        if (name.contains("salt") || name.contains("pepper") || name.contains("sugar") || name.contains("spice")) return "🧂";
-        if (name.contains("onion") || name.contains("garlic")) return "🧄";
-        if (name.contains("scallion") || name.contains("spinach") || name.contains("carrot") || name.contains("vegetable")) return "🥕";
-        if (name.contains("milk") || name.contains("cream") || name.contains("cheese") || name.contains("butter")) return "🥛";
-        if (name.contains("pasta") || name.contains("noodle")) return "🍝";
-        if (name.contains("sauce") || name.contains("vinegar") || name.contains("oil")) return "🍶";
-        return "🛒";
+        if (name.contains("egg") || name.contains("chicken") || name.contains("beef") || name.contains("steak")
+                || name.contains("pork") || name.contains("ribs") || name.contains("tofu")) return "Protein";
+        if (name.contains("rice") || name.contains("bread") || name.contains("toast")
+                || name.contains("pasta") || name.contains("noodle") || name.contains("vermicelli")) return "Grain";
+        if (name.contains("milk") || name.contains("cream") || name.contains("cheese") || name.contains("butter")) return "Dairy";
+        if (name.contains("salt") || name.contains("pepper") || name.contains("sugar") || name.contains("spice")
+                || name.contains("sauce") || name.contains("vinegar") || name.contains("oil") || name.contains("paste")) return "Pantry";
+        if (name.contains("apple") || name.contains("fruit") || name.contains("avocado") || name.contains("tomato")
+                || name.contains("pumpkin") || name.contains("pickle") || name.contains("seaweed") || name.contains("onion")
+                || name.contains("garlic") || name.contains("scallion") || name.contains("spinach")
+                || name.contains("carrot") || name.contains("vegetable") || name.contains("herb")) return "Produce";
+        return "Other";
+    }
+
+    private String getCategoryBadgeStyle(String category) {
+        String color = switch (category) {
+            case "Protein" -> "#D94841";
+            case "Grain" -> "#B7791F";
+            case "Produce" -> "#2F855A";
+            case "Dairy" -> "#2B6CB0";
+            case "Pantry" -> "#6B46C1";
+            default -> "#4A5568";
+        };
+        String background = switch (category) {
+            case "Protein" -> "#FDEDEC";
+            case "Grain" -> "#FFF7E6";
+            case "Produce" -> "#EAF7EF";
+            case "Dairy" -> "#EAF2FF";
+            case "Pantry" -> "#F1ECFF";
+            default -> "#EDF2F7";
+        };
+        return "-fx-background-color: " + background + "; " +
+               "-fx-text-fill: " + color + "; " +
+               "-fx-font-size: 10px; " +
+               "-fx-font-weight: bold; " +
+               "-fx-background-radius: 999px; " +
+               "-fx-padding: 3 8;";
     }
 
     @FXML
@@ -390,7 +426,7 @@ public class ShoppingListController implements ContextAware {
                 Recipe r = scored.get(i).recipe;
                 int matches = scored.get(i).score;
 
-                Button suggestBtn = new Button("➕ " + r.getTitle() + " (" + matches + " matches)");
+                Button suggestBtn = new Button("Add " + r.getTitle() + " (" + matches + " matches)");
                 suggestBtn.getStyleClass().add("btn-outline");
                 suggestBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #E76F51; -fx-cursor: hand; -fx-font-weight: bold; -fx-background-color: #FFF2E6; -fx-border-color: #FFE0CC; -fx-background-radius: 12px; -fx-border-radius: 12px;");
                 suggestBtn.setOnAction(e -> {
@@ -412,11 +448,11 @@ public class ShoppingListController implements ContextAware {
         suggestionBox.setVisible(false);
         instructionLabel.setText("Select recipes on the left to start");
         if (completionProgress != null) completionProgress.setProgress(0.0);
-        if (motivationLabel != null) motivationLabel.setText("Select recipes to start! 🍳");
+        if (motivationLabel != null) motivationLabel.setText("Select recipes to start");
 
         try {
             if (listId != -1) {
-                shoppingListDAO.clearSelectedRecipes(listId);
+                shoppingListDAO.clearSelectedRecipesByDate(listId, currentPlanDate.toString());
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -476,7 +512,7 @@ public class ShoppingListController implements ContextAware {
                 setStyle("-fx-background-color: transparent; -fx-padding: 0;");
             } else {
                 recipeTitle.setText(recipe.getTitle());
-                recipeMeta.setText("⏱ " + recipe.getTotalTime() + " min");
+                recipeMeta.setText(recipe.getTotalTime() + " min");
                 
                 boolean isSelected = selectedRecipeIds.contains(recipe.getRecipeId());
                 if (isSelected) {
@@ -526,28 +562,29 @@ public class ShoppingListController implements ContextAware {
         }
     }
 
-    private void postPlanDateAnnouncement(String targetDate) {
+    private String formatDateFriendly(LocalDate date) {
+        if (date.equals(LocalDate.now())) return "Today, " + date.format(DateTimeFormatter.ofPattern("MMM d"));
+        if (date.equals(LocalDate.now().plusDays(1))) return "Tomorrow, " + date.format(DateTimeFormatter.ofPattern("MMM d"));
+        return date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"));
+    }
+
+    private void postPlanDateAnnouncement(LocalDate targetDate) {
         try {
             int roomId = getUserRoomId(currentUser);
             if (roomId > 0) {
-                // Get selected recipe titles
                 List<Recipe> selected = new ArrayList<>();
                 for (Recipe r : recipeListView.getItems()) {
-                    if (selectedRecipeIds.contains(r.getRecipeId())) {
-                        selected.add(r);
-                    }
+                    if (selectedRecipeIds.contains(r.getRecipeId())) selected.add(r);
                 }
-                
+                String author = Character.toUpperCase(currentUser.getUsername().charAt(0)) + currentUser.getUsername().substring(1);
+                String friendly = formatDateFriendly(targetDate);
                 String scheduleMsg;
                 if (selected.isEmpty()) {
-                    scheduleMsg = String.format("📅 %s updated the room cooking plan target date to %s.", 
-                        currentUser.getUsername(), targetDate);
+                    scheduleMsg = String.format("%s set cook date to %s.", author, friendly);
                 } else {
                     String recipesStr = selected.stream().map(Recipe::getTitle).collect(Collectors.joining(", "));
-                    scheduleMsg = String.format("📅 %s scheduled a cooking plan for %s! Selected: %s", 
-                        currentUser.getUsername(), targetDate, recipesStr);
+                    scheduleMsg = String.format("%s planned to cook %s on %s.", author, recipesStr, friendly);
                 }
-                
                 com.vinrecipe.dao.UserDAO userDAO = new com.vinrecipe.dao.UserDAO();
                 userDAO.insertAnnouncement(roomId, currentUser.getUserId(), scheduleMsg);
             }
@@ -563,7 +600,7 @@ public class ShoppingListController implements ContextAware {
         private final Label checkMark = new Label();
         private final VBox textContainer = new VBox(2);
         private final HBox nameRow = new HBox(6);
-        private final Label itemEmoji = new Label();
+        private final Label categoryBadge = new Label();
         private final Label itemName = new Label();
         private final Label itemQty = new Label();
         private final Region spacer = new Region();
@@ -581,9 +618,10 @@ public class ShoppingListController implements ContextAware {
             checkCircle.getChildren().add(checkMark);
             
             nameRow.setAlignment(Pos.CENTER_LEFT);
-            itemEmoji.setStyle("-fx-font-size: 16px;");
+            categoryBadge.setMinWidth(68);
+            categoryBadge.setAlignment(Pos.CENTER);
             itemName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2D3748;");
-            nameRow.getChildren().addAll(itemEmoji, itemName);
+            nameRow.getChildren().addAll(categoryBadge, itemName);
             
             itemQty.setStyle("-fx-font-size: 11px; -fx-text-fill: #718096;");
             textContainer.getChildren().addAll(nameRow, itemQty);
@@ -631,7 +669,9 @@ public class ShoppingListController implements ContextAware {
             } else {
                 itemName.setText(item.getName());
                 itemQty.setText(String.format("%.1f %s", item.getQuantity(), item.getUnit()));
-                itemEmoji.setText(getEmojiForIngredient(item.getName()));
+                String category = getCategoryForIngredient(item.getName());
+                categoryBadge.setText(category);
+                categoryBadge.setStyle(getCategoryBadgeStyle(category));
                 
                 if (item.isChecked()) {
                     checkCircle.setStyle(

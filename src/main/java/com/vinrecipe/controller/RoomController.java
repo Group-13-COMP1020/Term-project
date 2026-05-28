@@ -20,10 +20,12 @@ import javafx.scene.layout.VBox;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javafx.util.StringConverter;
 
 public class RoomController implements ContextAware {
 
@@ -62,7 +64,7 @@ public class RoomController implements ContextAware {
         this.searchService  = searchService;
         this.mainController = mainController;
 
-        // Bind custom cell factory for groceries list view to guarantee high-fidelity visibility and bypass CSS overrides
+        // Bind custom cell factory for groceries list view to avoid unreliable emoji glyphs.
         roomGroceriesListView.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -71,9 +73,29 @@ public class RoomController implements ContextAware {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    Label lbl = new Label(item);
-                    lbl.setStyle("-fx-font-size: 13.5px; -fx-text-fill: #2D3748; -fx-font-weight: 500;");
-                    setGraphic(lbl);
+                    String[] parts = item.split("\\|", 4);
+                    String category = parts.length > 0 ? parts[0] : "Other";
+                    String name = parts.length > 1 ? parts[1] : item;
+                    String amount = parts.length > 2 ? parts[2] : "";
+                    String unit = parts.length > 3 ? parts[3] : "";
+
+                    Label badge = new Label(category);
+                    badge.setMinWidth(72);
+                    badge.setAlignment(Pos.CENTER);
+                    badge.setStyle(getCategoryBadgeStyle(category));
+
+                    Label itemName = new Label(name);
+                    itemName.setStyle("-fx-font-size: 13.5px; -fx-text-fill: #2D3748; -fx-font-weight: 600;");
+
+                    Label itemAmount = new Label((amount + " " + unit).trim());
+                    itemAmount.setStyle("-fx-font-size: 12px; -fx-text-fill: #718096;");
+
+                    Region spacer = new Region();
+                    HBox.setHgrow(spacer, Priority.ALWAYS);
+                    HBox row = new HBox(10, badge, itemName, spacer, itemAmount);
+                    row.setAlignment(Pos.CENTER_LEFT);
+                    row.setPadding(new Insets(4, 0, 4, 0));
+                    setGraphic(row);
                     setText(null);
                 }
             }
@@ -96,43 +118,44 @@ public class RoomController implements ContextAware {
             roomSubtitleLabel.setText("Sharing panel. Cook together, live better.");
         }
 
-        // Initialize dynamic announcements from the SQLite database
-        try {
-            announcements.setAll(userDAO.getAnnouncements(roomId));
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Fallback default
-            announcements.setAll(
-                new UserDAO.Announcement("🍳 Trang is cooking Tofu wih Tomato Sauce on Tuesday!", "2026-05-25 14:40:46"),
-                new UserDAO.Announcement("🧄 Nguyen: \"Who bought garlic? We have plenty in the pantry!\"", "2026-05-25 14:40:46"),
-                new UserDAO.Announcement("🧹 Leader Nhan: \"Remember to wipe down the hotpot after usage.\"", "2026-05-25 14:40:46")
-            );
-        }
-        renderAnnouncements();
-
-        // Load room cooking plan and groceries
-        loadRoomCookingPlanAndGroceries(roomId);
-
-        // Load plan date and setup DatePicker listener
+        // Load plan date first, then groceries for that date, then announcements
         try {
             int listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
             String savedDateStr = shoppingListDAO.getPlanDate(listId);
-            if (savedDateStr != null && !savedDateStr.trim().isEmpty()) {
-                try {
-                    planDatePicker.setValue(LocalDate.parse(savedDateStr));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+            LocalDate planDate = (savedDateStr != null && !savedDateStr.trim().isEmpty())
+                ? LocalDate.parse(savedDateStr) : LocalDate.now();
+
+            loadRoomCookingPlanAndGroceries(roomId, planDate.toString());
+
+            DateTimeFormatter displayFmt = DateTimeFormatter.ofPattern("MMM d, yyyy");
+            planDatePicker.setConverter(new StringConverter<LocalDate>() {
+                @Override public String toString(LocalDate d) {
+                    return d == null ? "" : d.format(displayFmt);
                 }
+                @Override public LocalDate fromString(String s) {
+                    if (s == null || s.trim().isEmpty()) return null;
+                    try { return LocalDate.parse(s, displayFmt); } catch (Exception e) { return null; }
+                }
+            });
+            planDatePicker.setValue(planDate);
+
+            // Load announcements filtered by plan date
+            try {
+                announcements.setAll(userDAO.getAnnouncementsByDate(roomId, planDate.toString()));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                announcements.setAll(userDAO.getAnnouncements(roomId));
             }
-            
+            renderAnnouncements();
+
             final int finalListId = listId;
             planDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null) {
                     try {
                         shoppingListDAO.updatePlanDate(finalListId, newVal.toString());
-                        postPlanDateAnnouncement(newVal.toString());
-                        // Refresh announcements dynamically in memory!
-                        announcements.setAll(userDAO.getAnnouncements(roomId));
+                        postPlanDateAnnouncement(newVal);
+                        loadRoomCookingPlanAndGroceries(roomId, newVal.toString());
+                        announcements.setAll(userDAO.getAnnouncementsByDate(roomId, newVal.toString()));
                         renderAnnouncements();
                     } catch (SQLException ex) {
                         ex.printStackTrace();
@@ -141,6 +164,13 @@ public class RoomController implements ContextAware {
             });
         } catch (SQLException e) {
             e.printStackTrace();
+            loadRoomCookingPlanAndGroceries(roomId, LocalDate.now().toString());
+            try {
+                announcements.setAll(userDAO.getAnnouncements(roomId));
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            renderAnnouncements();
         }
     }
 
@@ -154,6 +184,15 @@ public class RoomController implements ContextAware {
     }
 
     private void renderMembers(List<User> members) {
+        members = new ArrayList<>(members);
+        members.sort((a, b) -> {
+            boolean aIsCurrent = a.getUsername().equals(currentUser.getUsername());
+            boolean bIsCurrent = b.getUsername().equals(currentUser.getUsername());
+            if (aIsCurrent != bIsCurrent) return aIsCurrent ? -1 : 1;
+            boolean aIsLeader = "ROOM_LEADER".equals(a.getRole());
+            boolean bIsLeader = "ROOM_LEADER".equals(b.getRole());
+            return Boolean.compare(!aIsLeader, !bIsLeader);
+        });
         membersBox.getChildren().clear();
         for (User u : members) {
             HBox card = new HBox(12);
@@ -238,7 +277,10 @@ public class RoomController implements ContextAware {
             );
             card.setMaxWidth(Double.MAX_VALUE);
 
-            Label msgLabel = new Label(a.getMessage());
+            Label typeBadge = new Label(getAnnouncementType(a.getMessage()));
+            typeBadge.setStyle(getAnnouncementBadgeStyle(typeBadge.getText()));
+
+            Label msgLabel = new Label(cleanAnnouncementMessage(a.getMessage()));
             msgLabel.setStyle(
                 "-fx-font-size: 13.5px; " +
                 "-fx-text-fill: #2D3748; " +
@@ -246,8 +288,12 @@ public class RoomController implements ContextAware {
             );
             msgLabel.setMaxWidth(Double.MAX_VALUE);
 
+            HBox messageRow = new HBox(8, typeBadge, msgLabel);
+            messageRow.setAlignment(Pos.TOP_LEFT);
+            HBox.setHgrow(msgLabel, Priority.ALWAYS);
+
             String timeStr = formatTimestamp(a.getCreatedAt());
-            Label timeLabel = new Label("• " + timeStr);
+            Label timeLabel = new Label(timeStr);
             timeLabel.setStyle(
                 "-fx-font-size: 10.5px; " +
                 "-fx-text-fill: #A0AEC0; " +
@@ -258,7 +304,7 @@ public class RoomController implements ContextAware {
             bottomRow.setAlignment(Pos.CENTER_RIGHT);
             bottomRow.getChildren().add(timeLabel);
 
-            card.getChildren().addAll(msgLabel, bottomRow);
+            card.getChildren().addAll(messageRow, bottomRow);
             announcementList.getChildren().add(0, card); // new ones on top
         }
     }
@@ -286,7 +332,7 @@ public class RoomController implements ContextAware {
         String msg = announcementInput.getText().trim();
         if (!msg.isEmpty()) {
             String author = capitalize(currentUser.getUsername());
-            String formattedMsg = "📣 " + author + ": \"" + msg + "\"";
+            String formattedMsg = author + ": \"" + msg + "\"";
             
             int roomId = getUserRoomId(currentUser);
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -307,10 +353,10 @@ public class RoomController implements ContextAware {
         }
     }
 
-    private void loadRoomCookingPlanAndGroceries(int roomId) {
+    private void loadRoomCookingPlanAndGroceries(int roomId, String planDate) {
         try {
             int listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
-            List<Recipe> selected = shoppingListDAO.getSelectedRecipes(listId, recipeService);
+            List<Recipe> selected = shoppingListDAO.getSelectedRecipesByDate(listId, planDate, recipeService);
             
             if (selected.isEmpty()) {
                 recipesSummaryLabel.setText("No recipes selected yet! Go to the 'Shopping Lists' tab to select recipes.");
@@ -332,9 +378,8 @@ public class RoomController implements ContextAware {
                 String name = entry.getKey();
                 double qty = entry.getValue();
                 String unit = units.getOrDefault(name, "");
-                String emoji = getEmojiForIngredient(name);
-                
-                displayList.add(String.format("%s %s: %.1f %s", emoji, capitalize(name), qty, unit));
+                String category = getCategoryForIngredient(name);
+                displayList.add(String.format("%s|%s|%.1f|%s", category, capitalize(name), qty, unit));
             }
             
             // Sort alphabetically
@@ -343,7 +388,7 @@ public class RoomController implements ContextAware {
             
         } catch (SQLException e) {
             e.printStackTrace();
-            recipesSummaryLabel.setText("⚠ Database error loading cooking plan.");
+            recipesSummaryLabel.setText("Database error loading cooking plan.");
             roomGroceriesListView.getItems().clear();
         }
     }
@@ -353,48 +398,104 @@ public class RoomController implements ContextAware {
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
-    private String getEmojiForIngredient(String name) {
+    private String getCategoryForIngredient(String name) {
         name = name.toLowerCase().trim();
-        if (name.contains("apple") || name.contains("fruit")) return "🍎";
-        if (name.contains("avocado")) return "🥑";
-        if (name.contains("egg")) return "🥚";
-        if (name.contains("bread") || name.contains("toast")) return "🍞";
-        if (name.contains("chicken")) return "🍗";
-        if (name.contains("beef") || name.contains("steak")) return "🥩";
-        if (name.contains("pork") || name.contains("ribs")) return "🥓";
-        if (name.contains("potato") || name.contains("fry") || name.contains("fries")) return "🍟";
-        if (name.contains("tofu")) return "🍲";
-        if (name.contains("tomato")) return "🍅";
-        if (name.contains("pumpkin") || name.contains("soup")) return "🎃";
-        if (name.contains("rice")) return "🍚";
-        if (name.contains("pickle")) return "🥒";
-        if (name.contains("gimbap") || name.contains("seaweed") || name.contains("roll")) return "🍣";
-        if (name.contains("salt") || name.contains("pepper") || name.contains("sugar") || name.contains("spice")) return "🧂";
-        if (name.contains("onion") || name.contains("garlic")) return "🧄";
-        if (name.contains("scallion") || name.contains("spinach") || name.contains("carrot") || name.contains("vegetable")) return "🥕";
-        if (name.contains("milk") || name.contains("cream") || name.contains("cheese") || name.contains("butter")) return "🥛";
-        if (name.contains("pasta") || name.contains("noodle")) return "🍝";
-        if (name.contains("sauce") || name.contains("vinegar") || name.contains("oil")) return "🍶";
-        return "🛒";
+        if (name.contains("egg") || name.contains("chicken") || name.contains("beef") || name.contains("steak")
+                || name.contains("pork") || name.contains("ribs") || name.contains("tofu")) return "Protein";
+        if (name.contains("rice") || name.contains("bread") || name.contains("toast")
+                || name.contains("pasta") || name.contains("noodle") || name.contains("vermicelli")) return "Grain";
+        if (name.contains("milk") || name.contains("cream") || name.contains("cheese") || name.contains("butter")) return "Dairy";
+        if (name.contains("salt") || name.contains("pepper") || name.contains("sugar") || name.contains("spice")
+                || name.contains("sauce") || name.contains("vinegar") || name.contains("oil") || name.contains("paste")) return "Pantry";
+        if (name.contains("apple") || name.contains("fruit") || name.contains("avocado") || name.contains("tomato")
+                || name.contains("pumpkin") || name.contains("pickle") || name.contains("seaweed") || name.contains("onion")
+                || name.contains("garlic") || name.contains("scallion") || name.contains("spinach")
+                || name.contains("carrot") || name.contains("vegetable") || name.contains("herb")) return "Produce";
+        return "Other";
     }
 
-    private void postPlanDateAnnouncement(String targetDate) {
+    private String getCategoryBadgeStyle(String category) {
+        String color = switch (category) {
+            case "Protein" -> "#D94841";
+            case "Grain" -> "#B7791F";
+            case "Produce" -> "#2F855A";
+            case "Dairy" -> "#2B6CB0";
+            case "Pantry" -> "#6B46C1";
+            default -> "#4A5568";
+        };
+        String background = switch (category) {
+            case "Protein" -> "#FDEDEC";
+            case "Grain" -> "#FFF7E6";
+            case "Produce" -> "#EAF7EF";
+            case "Dairy" -> "#EAF2FF";
+            case "Pantry" -> "#F1ECFF";
+            default -> "#EDF2F7";
+        };
+        return "-fx-background-color: " + background + "; " +
+               "-fx-text-fill: " + color + "; " +
+               "-fx-font-size: 10.5px; " +
+               "-fx-font-weight: bold; " +
+               "-fx-background-radius: 999px; " +
+               "-fx-padding: 3 8;";
+    }
+
+    private String getAnnouncementType(String message) {
+        String clean = cleanAnnouncementMessage(message).toLowerCase();
+        if (clean.contains("cooking plan") || clean.contains("target date") || clean.contains("selected:")) return "PLAN";
+        if (clean.contains("bought") || clean.contains("pantry") || clean.contains("shopping")) return "SHOP";
+        if (clean.contains("wipe") || clean.contains("remember")) return "ROOM";
+        return "POST";
+    }
+
+    private String getAnnouncementBadgeStyle(String type) {
+        String color = switch (type) {
+            case "PLAN" -> "#E76F51";
+            case "SHOP" -> "#2B6CB0";
+            case "ROOM" -> "#2F855A";
+            default -> "#4A5568";
+        };
+        String background = switch (type) {
+            case "PLAN" -> "#FFF2E6";
+            case "SHOP" -> "#EAF2FF";
+            case "ROOM" -> "#EAF7EF";
+            default -> "#EDF2F7";
+        };
+        return "-fx-background-color: " + background + "; " +
+               "-fx-text-fill: " + color + "; " +
+               "-fx-font-size: 10px; " +
+               "-fx-font-weight: bold; " +
+               "-fx-background-radius: 999px; " +
+               "-fx-padding: 3 7;";
+    }
+
+    private String cleanAnnouncementMessage(String message) {
+        if (message == null) return "";
+        return message.replaceAll("^[^A-Za-z0-9]+\\s*", "").trim();
+    }
+
+    private String formatDateFriendly(LocalDate date) {
+        if (date.equals(LocalDate.now())) return "Today, " + date.format(DateTimeFormatter.ofPattern("MMM d"));
+        if (date.equals(LocalDate.now().plusDays(1))) return "Tomorrow, " + date.format(DateTimeFormatter.ofPattern("MMM d"));
+        return date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"));
+    }
+
+    private void postPlanDateAnnouncement(LocalDate targetDate) {
         try {
             int roomId = getUserRoomId(currentUser);
             if (roomId > 0) {
                 int listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
                 List<Recipe> selected = shoppingListDAO.getSelectedRecipes(listId, recipeService);
-                
+                String author = capitalize(currentUser.getUsername());
+                String friendly = formatDateFriendly(targetDate);
+
                 String scheduleMsg;
                 if (selected.isEmpty()) {
-                    scheduleMsg = String.format("📅 %s updated the room cooking plan target date to %s.", 
-                        currentUser.getUsername(), targetDate);
+                    scheduleMsg = String.format("%s set cook date to %s.", author, friendly);
                 } else {
                     String recipesStr = selected.stream().map(Recipe::getTitle).collect(Collectors.joining(", "));
-                    scheduleMsg = String.format("📅 %s scheduled a cooking plan for %s! Selected: %s", 
-                        currentUser.getUsername(), targetDate, recipesStr);
+                    scheduleMsg = String.format("%s planned to cook %s on %s.", author, recipesStr, friendly);
                 }
-                
+
                 userDAO.insertAnnouncement(roomId, currentUser.getUserId(), scheduleMsg);
             }
         } catch (Exception e) {

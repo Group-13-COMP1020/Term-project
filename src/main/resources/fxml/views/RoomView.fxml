@@ -42,7 +42,7 @@
                 <!-- Quick Post announcement row -->
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <TextField fx:id="announcementInput" promptText="Post a notice..." HBox.hgrow="ALWAYS" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 10; -fx-font-size: 12px;"/>
-                    <Button text="Post 📣" onAction="#handlePostAnnouncement" style="-fx-background-color: #E76F51; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-cursor: hand; -fx-font-size: 12px;"/>
+                    <Button text="Post" onAction="#handlePostAnnouncement" style="-fx-background-color: #E76F51; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px; -fx-padding: 8 12; -fx-cursor: hand; -fx-font-size: 12px;"/>
                 </HBox>
                 
                 <Separator style="-fx-opacity: 0.3;"/>
@@ -58,10 +58,11 @@
             
             <!-- Room Cooking Plan & Grocery Summary Card -->
             <VBox spacing="14" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);" VBox.vgrow="ALWAYS">
+                <Label text="Room Cooking Plan &amp; Groceries Summary" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+
                 <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Label text="Room Cooking Plan &amp; Groceries Summary" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2D3748;" HBox.hgrow="ALWAYS"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <DatePicker fx:id="planDatePicker" promptText="Schedule date" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-pref-width: 150px; -fx-cursor: hand;"/>
+                    <Label text="Cook date:" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #718096;"/>
+                    <DatePicker fx:id="planDatePicker" promptText="Pick a date" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-pref-width: 180px; -fx-cursor: hand;"/>
                 </HBox>
                 
                 <VBox spacing="6">

@@ -222,6 +222,23 @@ public class UserDAO {
         return list;
     }
 
+    /** Get announcements for a room on a specific date (ISO yyyy-MM-dd). */
+    public List<Announcement> getAnnouncementsByDate(int roomId, String date) throws SQLException {
+        List<Announcement> list = new ArrayList<>();
+        if (roomId <= 0) return list;
+        String sql = "SELECT message, created_at FROM announcements WHERE room_id = ? AND DATE(created_at) = ? ORDER BY created_at ASC";
+        Connection conn = DatabaseConnection.getInstance();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, roomId);
+            stmt.setString(2, date);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(new Announcement(rs.getString("message"), rs.getString("created_at")));
+            }
+        }
+        return list;
+    }
+
     /** Delete user by ID. Admin power. */
     public boolean deleteUser(int userId) throws SQLException {
         String sql = "DELETE FROM users WHERE user_id = ?";

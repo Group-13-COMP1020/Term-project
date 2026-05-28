@@ -27,7 +27,7 @@ public class App extends Application {
         scene.getStylesheets().add(
                 getClass().getResource("/css/style.css").toExternalForm());
 
-        primaryStage.setTitle("VinRECIPE — Smart Recipe Planner");
+        primaryStage.setTitle("VinRECIPE - Smart Recipe Planner");
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();

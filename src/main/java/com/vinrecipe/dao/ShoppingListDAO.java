@@ -159,4 +159,64 @@ public class ShoppingListDAO {
             stmt.executeUpdate();
         }
     }
+
+    // --- Date-scoped recipe selection (shopping_list_daily_recipes) ---
+
+    public List<Recipe> getSelectedRecipesByDate(int listId, String planDate, RecipeService recipeService) throws SQLException {
+        List<Recipe> selected = new ArrayList<>();
+        String sql = "SELECT recipe_id FROM shopping_list_daily_recipes WHERE list_id = ? AND plan_date = ?";
+        Connection conn = DatabaseConnection.getInstance();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, listId);
+            stmt.setString(2, planDate);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Recipe r = recipeService.getRecipeById(rs.getInt("recipe_id"));
+                    if (r != null) selected.add(r);
+                }
+            }
+        }
+        return selected;
+    }
+
+    public void saveSelectedRecipesByDate(int listId, String planDate, List<Integer> recipeIds) throws SQLException {
+        Connection conn = DatabaseConnection.getInstance();
+        conn.setAutoCommit(false);
+        try {
+            String deleteSql = "DELETE FROM shopping_list_daily_recipes WHERE list_id = ? AND plan_date = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(deleteSql)) {
+                stmt.setInt(1, listId);
+                stmt.setString(2, planDate);
+                stmt.executeUpdate();
+            }
+            if (recipeIds != null && !recipeIds.isEmpty()) {
+                String insertSql = "INSERT INTO shopping_list_daily_recipes (list_id, plan_date, recipe_id) VALUES (?, ?, ?)";
+                try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+                    for (int recipeId : recipeIds) {
+                        stmt.setInt(1, listId);
+                        stmt.setString(2, planDate);
+                        stmt.setInt(3, recipeId);
+                        stmt.addBatch();
+                    }
+                    stmt.executeBatch();
+                }
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+        }
+    }
+
+    public void clearSelectedRecipesByDate(int listId, String planDate) throws SQLException {
+        String sql = "DELETE FROM shopping_list_daily_recipes WHERE list_id = ? AND plan_date = ?";
+        Connection conn = DatabaseConnection.getInstance();
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, listId);
+            stmt.setString(2, planDate);
+            stmt.executeUpdate();
+        }
+    }
 }

@@ -9,15 +9,19 @@ import java.sql.PreparedStatement;
 
 /**
  * Singleton class managing the local SQLite database connection.
- * Bypasses MySQL server configuration completely by storing data locally in vinrecipe.db.
+ * Stores data locally in vinrecipe.db by default.
  */
 public class DatabaseConnection {
 
-    private static final String URL = "jdbc:sqlite:vinrecipe.db";
+    private static final String DEFAULT_DB_PATH = "vinrecipe.db";
     private static Connection instance = null;
 
-    // Private constructor — prevents external instantiation
+    // Private constructor prevents external instantiation.
     private DatabaseConnection() {}
+
+    private static String getDatabasePath() {
+        return System.getProperty("vinrecipe.db.path", DEFAULT_DB_PATH);
+    }
 
     /**
      * Returns the shared Connection, creating it if needed.
@@ -27,8 +31,9 @@ public class DatabaseConnection {
         if (instance == null || instance.isClosed()) {
             try {
                 Class.forName("org.sqlite.JDBC");
-                instance = DriverManager.getConnection(URL);
-                System.out.println("[DB] Connected to local SQLite database (vinrecipe.db)");
+                String databasePath = getDatabasePath();
+                instance = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
+                System.out.println("[DB] Connected to local SQLite database (" + databasePath + ")");
                 
                 // Enable foreign keys in SQLite
                 try (Statement stmt = instance.createStatement()) {
@@ -146,7 +151,17 @@ public class DatabaseConnection {
                          "FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE" +
                          ")");
 
-            // 9. Create saved_recipes table
+            // 9. Create shopping_list_daily_recipes table (date-scoped selections)
+            stmt.execute("CREATE TABLE IF NOT EXISTS shopping_list_daily_recipes (" +
+                         "list_id INTEGER NOT NULL, " +
+                         "plan_date TEXT NOT NULL, " +
+                         "recipe_id INTEGER NOT NULL, " +
+                         "PRIMARY KEY (list_id, plan_date, recipe_id), " +
+                         "FOREIGN KEY (list_id) REFERENCES shopping_lists(list_id) ON DELETE CASCADE, " +
+                         "FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE" +
+                         ")");
+
+            // 10. Create saved_recipes table
             stmt.execute("CREATE TABLE IF NOT EXISTS saved_recipes (" +
                          "user_id INTEGER NOT NULL, " +
                          "recipe_id INTEGER NOT NULL, " +
@@ -168,6 +183,7 @@ public class DatabaseConnection {
 
             // Seed announcements if empty
             boolean hasAnnouncements = false;
+            boolean canSeedAnnouncements = false;
             try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM announcements")) {
                 if (rs.next() && rs.getInt(1) > 0) {
                     hasAnnouncements = true;
@@ -175,12 +191,15 @@ public class DatabaseConnection {
             } catch (SQLException e) {
                 // Table might not exist yet, but create table executed above
             }
-            if (!hasAnnouncements) {
+            try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users WHERE user_id IN (2, 3, 4)")) {
+                canSeedAnnouncements = rs.next() && rs.getInt(1) == 3;
+            }
+            if (!hasAnnouncements && canSeedAnnouncements) {
                 System.out.println("[DB Initialization] Seeding default announcements...");
                 stmt.execute("INSERT INTO announcements (room_id, user_id, message) VALUES " +
-                             "(1, 3, '🍳 Trang is cooking Tofu wih Tomato Sauce on Tuesday!'), " +
-                             "(1, 4, '🧄 Nguyen: \"Who bought garlic? We have plenty in the pantry!\"'), " +
-                             "(1, 2, '🧹 Leader Nhan: \"Remember to wipe down the hotpot after usage.\"');");
+                             "(1, 3, 'Trang is cooking Tofu with Tomato Sauce on Tuesday.'), " +
+                             "(1, 4, 'Nguyen: \"Who bought garlic? We have plenty in the pantry.\"'), " +
+                             "(1, 2, 'Leader Nhan: \"Remember to wipe down the hotpot after usage.\"');");
             }
 
             System.out.println("[DB Initialization] SQLite database structure verified.");
@@ -288,10 +307,28 @@ public class DatabaseConnection {
                 System.out.println("[DB Initialization] Seeding complete! Database ready.");
             }
 
+            seedAnnouncementsIfMissing(conn);
             addMoreRecipesIfMissing(conn);
         } catch (SQLException e) {
             System.err.println("[DB Initialization] Error: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private static void seedAnnouncementsIfMissing(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM announcements")) {
+            if (rs.next() && rs.getInt(1) > 0) {
+                return;
+            }
+        }
+
+        try (Statement stmt = conn.createStatement()) {
+            System.out.println("[DB Initialization] Seeding default announcements...");
+            stmt.execute("INSERT INTO announcements (room_id, user_id, message) VALUES " +
+                         "(1, 3, 'Trang is cooking Tofu with Tomato Sauce on Tuesday!'), " +
+                         "(1, 4, 'Nguyen: \"Who bought garlic? We have plenty in the pantry!\"'), " +
+                         "(1, 2, 'Leader Nhan: \"Remember to wipe down the hotpot after usage.\"');");
         }
     }
 
