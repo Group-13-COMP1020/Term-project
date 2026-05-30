@@ -11,8 +11,8 @@ public class Admin extends User {
         setRole("ADMIN");
     }
 
-    public Admin(int userId, String username, String password, String email) {
-        super(userId, username, password, email, "ADMIN");
+    public Admin(int userId, String username, String password) {
+        super(userId, username, password, "ADMIN");
     }
 
     /** Admins have the highest permission level (3). — Polymorphism */

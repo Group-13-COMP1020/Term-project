@@ -13,8 +13,8 @@ public class NormalStudent extends User {
         setRole("NORMAL_STUDENT");
     }
 
-    public NormalStudent(int userId, String username, String password, String email, int roomId) {
-        super(userId, username, password, email, "NORMAL_STUDENT");
+    public NormalStudent(int userId, String username, String password, int roomId) {
+        super(userId, username, password, "NORMAL_STUDENT");
         this.roomId = roomId;
     }
 

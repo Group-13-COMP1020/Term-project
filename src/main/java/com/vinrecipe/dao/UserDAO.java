@@ -84,17 +84,16 @@ public class UserDAO {
         int userId     = rs.getInt("user_id");
         String username = rs.getString("username");
         String password = rs.getString("password");
-        String email    = rs.getString("email");
         String role     = rs.getString("role");
         int roomId      = rs.getInt("room_id");
 
         switch (role) {
             case "ADMIN":
-                return new Admin(userId, username, password, email);
+                return new Admin(userId, username, password);
             case "ROOM_LEADER":
-                return new RoomLeader(userId, username, password, email, roomId);
+                return new RoomLeader(userId, username, password, roomId);
             default:
-                return new NormalStudent(userId, username, password, email, roomId);
+                return new NormalStudent(userId, username, password, roomId);
         }
     }
 

@@ -14,7 +14,7 @@
     <!-- Header Action Bar -->
     <HBox alignment="CENTER_LEFT" spacing="12">
         <VBox spacing="2" HBox.hgrow="ALWAYS">
-            <Label text="Admin Control Panel 🛡️" style="-fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
+            <Label text="Admin Control Panel" style="-fx-font-family: 'Segoe UI', sans-serif; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
             <Label text="Monitor accounts, manage roles, and review ecosystem metrics." style="-fx-font-size: 12px; -fx-text-fill: #718096;"/>
         </VBox>
     </HBox>
@@ -61,7 +61,6 @@
                 <columns>
                     <TableColumn fx:id="colUserId" text="ID" prefWidth="50"/>
                     <TableColumn fx:id="colUsername" text="Username" prefWidth="130"/>
-                    <TableColumn fx:id="colEmail" text="Email" prefWidth="180"/>
                     <TableColumn fx:id="colRole" text="Role" prefWidth="130"/>
                     <TableColumn fx:id="colRoom" text="Room ID / Name" prefWidth="130"/>
                 </columns>
@@ -73,7 +72,7 @@
 
         <!-- Right: Account Moderation Panel -->
         <VBox spacing="16" prefWidth="300" style="-fx-background-color: #FFFFFF; -fx-background-radius: 14px; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 8, 0, 0, 1);">
-            <Label text="Account Moderation 🛠️" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
+            <Label text="Account Moderation" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2D3748;"/>
             
             <VBox spacing="14" fx:id="editorContainer" disable="true" VBox.vgrow="ALWAYS">
                 <VBox spacing="6">

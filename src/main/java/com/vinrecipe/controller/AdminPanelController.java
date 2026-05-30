@@ -28,7 +28,6 @@ public class AdminPanelController implements ContextAware {
     @FXML private TableView<User> userTable;
     @FXML private TableColumn<User, Integer> colUserId;
     @FXML private TableColumn<User, String> colUsername;
-    @FXML private TableColumn<User, String> colEmail;
     @FXML private TableColumn<User, String> colRole;
     @FXML private TableColumn<User, String> colRoom;
 
@@ -58,7 +57,6 @@ public class AdminPanelController implements ContextAware {
         // Set up table columns
         colUserId.setCellValueFactory(new PropertyValueFactory<>("userId"));
         colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
-        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
 
         colRoom.setCellValueFactory(cellData -> {

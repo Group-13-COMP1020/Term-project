@@ -78,12 +78,11 @@ public class DatabaseConnection {
             }
 
 
-            // 2. Create users table (email is optional, only username is unique)
+            // 2. Create users table (only username is unique)
             stmt.execute("CREATE TABLE IF NOT EXISTS users (" +
                          "user_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                          "username TEXT NOT NULL UNIQUE, " +
                          "password TEXT NOT NULL, " +
-                         "email TEXT, " +
                          "role TEXT NOT NULL DEFAULT 'NORMAL_STUDENT', " +
                          "room_id INTEGER, " +
                          "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
@@ -230,13 +229,13 @@ public class DatabaseConnection {
                 stmt.execute("INSERT INTO rooms (room_id, room_name, leader_id, access_code) VALUES (1, 'VinUni Dorm A-101', 2, 'DORM01');");
 
                 // Insert Users
-                stmt.execute("INSERT INTO users (user_id, username, password, email, role, room_id) VALUES " +
-                             "(1, 'admin', 'admin123', 'admin@vinuni.edu.vn', 'ADMIN', NULL), " +
-                             "(2, 'nhan', 'nhan123', 'nhan@vinuni.edu.vn', 'ROOM_LEADER', 1), " +
-                             "(3, 'trang', 'trang123', 'trang@vinuni.edu.vn', 'NORMAL_STUDENT', 1), " +
-                             "(4, 'nguyen', 'nguyen123', 'nguyen@vinuni.edu.vn', 'NORMAL_STUDENT', 1), " +
-                             "(5, 'kiet', 'kiet123', 'kiet@vinuni.edu.vn', 'NORMAL_STUDENT', 1), " +
-                             "(6, 'phuong', 'phuong123', 'phuong@vinuni.edu.vn', 'NORMAL_STUDENT', 1);");
+                stmt.execute("INSERT INTO users (user_id, username, password, role, room_id) VALUES " +
+                             "(1, 'admin', 'admin123', 'ADMIN', NULL), " +
+                             "(2, 'nhan', 'nhan123', 'ROOM_LEADER', 1), " +
+                             "(3, 'trang', 'trang123', 'NORMAL_STUDENT', 1), " +
+                             "(4, 'nguyen', 'nguyen123', 'NORMAL_STUDENT', 1), " +
+                             "(5, 'kiet', 'kiet123', 'NORMAL_STUDENT', 1), " +
+                             "(6, 'phuong', 'phuong123', 'NORMAL_STUDENT', 1);");
 
                 // Insert Tags
                 stmt.execute("INSERT INTO tags (tag_id, name) VALUES " +

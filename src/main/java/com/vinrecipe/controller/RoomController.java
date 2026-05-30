@@ -436,7 +436,7 @@ public class RoomController implements ContextAware {
             int roomId = getUserRoomId(currentUser);
             if (roomId > 0) {
                 int listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
-                List<Recipe> selected = shoppingListDAO.getSelectedRecipes(listId, recipeService);
+                List<Recipe> selected = shoppingListDAO.getSelectedRecipesByDate(listId, targetDate.toString(), recipeService);
                 String author = capitalize(currentUser.getUsername());
                 String friendly = formatDateFriendly(targetDate);
 

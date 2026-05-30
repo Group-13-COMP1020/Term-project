@@ -38,7 +38,7 @@ public class UserService {
      * Register a new NormalStudent account (no room join).
      * @return generated userId on success, -1 on failure or if username taken.
      */
-    public int register(String username, String password, String email) {
+    public int register(String username, String password) {
         try {
             lastError = null;
             if (userDAO.findByUsername(username) != null) {
@@ -46,7 +46,7 @@ public class UserService {
                 System.err.println("[UserService] " + lastError);
                 return -1;
             }
-            NormalStudent newUser = new NormalStudent(0, username, password, email, 0);
+            NormalStudent newUser = new NormalStudent(0, username, password, 0);
             return userDAO.insert(newUser);
         } catch (SQLException | IllegalArgumentException e) {
             lastError = e.getMessage();
@@ -69,7 +69,7 @@ public class UserService {
                 return null;
             }
             String accessCode = generateAccessCode();
-            RoomLeader leader = new RoomLeader(0, username, password, "", 0);
+            RoomLeader leader = new RoomLeader(0, username, password, 0);
             int userId = userDAO.insert(leader);
             if (userId == -1) {
                 lastError = "Failed to create user in database";
@@ -110,7 +110,7 @@ public class UserService {
                 System.err.println("[UserService] " + lastError);
                 return -2;
             }
-            NormalStudent student = new NormalStudent(0, username, password, "", roomId);
+            NormalStudent student = new NormalStudent(0, username, password, roomId);
             int userId = userDAO.insert(student);
             if (userId == -1) {
                 lastError = "Failed to create user in database";

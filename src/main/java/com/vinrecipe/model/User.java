@@ -11,17 +11,15 @@ public abstract class User {
     private int userId;
     private String username;
     private String password;
-    private String email;
     private String role; // "ADMIN", "NORMAL_STUDENT", "ROOM_LEADER"
 
     // ---- Constructors ----
     public User() {}
 
-    public User(int userId, String username, String password, String email, String role) {
+    public User(int userId, String username, String password, String role) {
         this.userId = userId;
         setUsername(username);
         setPassword(password);
-        setEmail(email);
         this.role = role;
     }
 
@@ -69,11 +67,7 @@ public abstract class User {
         this.password = password;
     }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) {
-        // Email is optional — accept null or any string
-        this.email = (email == null) ? "" : email.trim();
-    }
+
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }

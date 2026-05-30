@@ -35,16 +35,25 @@
         <VBox spacing="14" HBox.hgrow="ALWAYS" style="-fx-background-color: #FFFFFF; -fx-background-radius: 16px; -fx-padding: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 2);">
             
             <!-- List Details Header -->
-            <HBox alignment="CENTER_LEFT" spacing="12">
-                <VBox spacing="2" HBox.hgrow="ALWAYS">
-                    <Label fx:id="instructionLabel" text="Room Groceries List" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;"/>
-                    <Label fx:id="totalPriceLabel" text="Estimated total: 0 VND" style="-fx-font-size: 12px; -fx-text-fill: #7F8C8D; -fx-font-weight: 500;"/>
-                </VBox>
-                <Label text="Cook date:" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #718096;"/>
-                <DatePicker fx:id="planDatePicker" promptText="Pick a date" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-pref-width: 180px; -fx-cursor: hand;"/>
-                <Button text="✚ Add item" onAction="#handleAddItem" style="-fx-background-color: #FFF2E6; -fx-text-fill: #E76F51; -fx-font-size: 12px; -fx-font-weight: bold; -fx-border-color: #FFE0CC; -fx-border-radius: 16px; -fx-background-radius: 16px; -fx-padding: 6 14; -fx-cursor: hand;"/>
-                <Button text="Clear" onAction="#handleClear" style="-fx-background-color: transparent; -fx-text-fill: #718096; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 6;"/>
-            </HBox>
+            <VBox spacing="12">
+                <!-- Row 1: Title and Totals on the left, plus Add & Clear buttons on the right -->
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label fx:id="instructionLabel" text="Room Groceries List" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1A1A1A;" wrapText="true"/>
+                        <Label fx:id="totalPriceLabel" text="Estimated total: 0 VND" style="-fx-font-size: 12px; -fx-text-fill: #7F8C8D; -fx-font-weight: 500;"/>
+                    </VBox>
+                    <HBox spacing="8" alignment="CENTER_RIGHT">
+                        <Button text="✚ Add Item" onAction="#handleAddItem" style="-fx-background-color: #FFF2E6; -fx-text-fill: #E76F51; -fx-font-size: 12px; -fx-font-weight: bold; -fx-border-color: #FFE0CC; -fx-border-radius: 16px; -fx-background-radius: 16px; -fx-padding: 6 14; -fx-cursor: hand;"/>
+                        <Button text="Clear List" onAction="#handleClear" style="-fx-background-color: #FFF5F5; -fx-text-fill: #E53E3E; -fx-font-size: 12px; -fx-font-weight: bold; -fx-border-color: #FED7D7; -fx-border-radius: 16px; -fx-background-radius: 16px; -fx-padding: 6 14; -fx-cursor: hand;"/>
+                    </HBox>
+                </HBox>
+                
+                <!-- Row 2: Cook Date Selector -->
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="Scheduled Cook Date:" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #718096;"/>
+                    <DatePicker fx:id="planDatePicker" promptText="Pick a date" style="-fx-background-color: #F8FAFC; -fx-border-color: #E2E8F0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-pref-width: 160px; -fx-cursor: hand; -fx-font-size: 12px;"/>
+                </HBox>
+            </VBox>
             
             <Separator style="-fx-opacity: 0.3;"/>
             

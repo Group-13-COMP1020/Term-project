@@ -38,7 +38,7 @@ public class DashboardController implements ContextAware {
         this.mainController = mainController;
 
         userLabel.setText("Welcome, " + currentUser.getUsername() + "!");
-        sortCombo.setItems(FXCollections.observableArrayList("Newest First", "Top Rated", "Quickest", "Cheapest"));
+        sortCombo.setItems(FXCollections.observableArrayList("Newest First", "Quickest", "Cheapest", "A-Z", "Z-A"));
         sortCombo.getSelectionModel().selectFirst();
         sortCombo.setOnAction(e -> applySort());
         loadRecipes();
@@ -63,12 +63,14 @@ public class DashboardController implements ContextAware {
         if (recipes == null) return;
         String selected = sortCombo.getValue();
         List<Recipe> sorted;
-        if ("Top Rated".equals(selected)) {
-            sorted = searchService.sortByRating(recipes);
-        } else if ("Quickest".equals(selected)) {
+        if ("Quickest".equals(selected)) {
             sorted = searchService.sortByPrepTime(recipes);
         } else if ("Cheapest".equals(selected)) {
             sorted = searchService.sortByPrice(recipes);
+        } else if ("A-Z".equals(selected)) {
+            sorted = searchService.sortAlphabeticalAZ(recipes);
+        } else if ("Z-A".equals(selected)) {
+            sorted = searchService.sortAlphabeticalZA(recipes);
         } else {
             // Newest first — default order from DB (already DESC by created_at)
             sorted = recipes;

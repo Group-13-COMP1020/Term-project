@@ -16,8 +16,8 @@ public class RoomLeader extends User {
         setRole("ROOM_LEADER");
     }
 
-    public RoomLeader(int userId, String username, String password, String email, int roomId) {
-        super(userId, username, password, email, "ROOM_LEADER");
+    public RoomLeader(int userId, String username, String password, int roomId) {
+        super(userId, username, password, "ROOM_LEADER");
         this.roomId = roomId;
     }
 

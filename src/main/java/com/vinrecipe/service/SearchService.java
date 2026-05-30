@@ -111,11 +111,29 @@ public class SearchService {
     }
 
     /**
-     * Sort all recipes by prep time (ASC).
+     * Sort all recipes by total time (ASC).
      */
     public List<Recipe> sortByPrepTime(List<Recipe> recipes) {
         List<Recipe> sorted = new ArrayList<>(recipes);
-        sorted.sort(Comparator.comparingInt(Recipe::getPrepTime));
+        sorted.sort(Comparator.comparingInt(Recipe::getTotalTime));
+        return sorted;
+    }
+
+    /**
+     * Sort all recipes alphabetically A-Z (ASC).
+     */
+    public List<Recipe> sortAlphabeticalAZ(List<Recipe> recipes) {
+        List<Recipe> sorted = new ArrayList<>(recipes);
+        sorted.sort((a, b) -> a.getTitle().compareToIgnoreCase(b.getTitle()));
+        return sorted;
+    }
+
+    /**
+     * Sort all recipes alphabetically Z-A (DESC).
+     */
+    public List<Recipe> sortAlphabeticalZA(List<Recipe> recipes) {
+        List<Recipe> sorted = new ArrayList<>(recipes);
+        sorted.sort((a, b) -> b.getTitle().compareToIgnoreCase(a.getTitle()));
         return sorted;
     }
 

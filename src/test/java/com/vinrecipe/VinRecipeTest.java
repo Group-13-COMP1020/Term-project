@@ -15,9 +15,9 @@ public class VinRecipeTest {
 
     @Test
     public void testUserInheritancePermissions() {
-        User student = new NormalStudent(1, "student_user", "pass", "student@vinuni.edu.vn", 101);
-        User leader = new RoomLeader(2, "leader_user", "pass", "leader@vinuni.edu.vn", 101);
-        User admin = new Admin(3, "admin_user", "pass", "admin@vinuni.edu.vn");
+        User student = new NormalStudent(1, "student_user", "pass", 101);
+        User leader = new RoomLeader(2, "leader_user", "pass", 101);
+        User admin = new Admin(3, "admin_user", "pass");
 
         // Verify polymorphism via getPermissionLevel() overrides
         assertEquals(1, student.getPermissionLevel(), "NormalStudent permission level must be 1");
@@ -119,5 +119,45 @@ public class VinRecipeTest {
         
         // Potato Salad (r3) has 66.6% completion (2 out of 3 ingredients) -> should be second!
         assertEquals("Potato Salad", results.get(1).getTitle());
+    }
+
+    @Test
+    public void testSortingAlgorithms() {
+        SearchService searchService = new SearchService();
+
+        Recipe r1 = new Recipe();
+        r1.setTitle("Banh Xeo");
+        r1.setPrepTime(10);
+        r1.setCookTime(15); // Total = 25
+
+        Recipe r2 = new Recipe();
+        r2.setTitle("Avocado Toast");
+        r2.setPrepTime(5);
+        r2.setCookTime(5); // Total = 10
+
+        Recipe r3 = new Recipe();
+        r3.setTitle("Com Tam");
+        r3.setPrepTime(15);
+        r3.setCookTime(20); // Total = 35
+
+        List<Recipe> list = List.of(r1, r2, r3);
+
+        // 1. Alphabetical A-Z
+        List<Recipe> az = searchService.sortAlphabeticalAZ(list);
+        assertEquals("Avocado Toast", az.get(0).getTitle());
+        assertEquals("Banh Xeo", az.get(1).getTitle());
+        assertEquals("Com Tam", az.get(2).getTitle());
+
+        // 2. Alphabetical Z-A
+        List<Recipe> za = searchService.sortAlphabeticalZA(list);
+        assertEquals("Com Tam", za.get(0).getTitle());
+        assertEquals("Banh Xeo", za.get(1).getTitle());
+        assertEquals("Avocado Toast", za.get(2).getTitle());
+
+        // 3. Quickest (Total Time)
+        List<Recipe> quickest = searchService.sortByPrepTime(list);
+        assertEquals("Avocado Toast", quickest.get(0).getTitle()); // 10 min
+        assertEquals("Banh Xeo", quickest.get(1).getTitle());       // 25 min
+        assertEquals("Com Tam", quickest.get(2).getTitle());       // 35 min
     }
 }

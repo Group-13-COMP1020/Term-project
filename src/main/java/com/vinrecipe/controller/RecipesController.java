@@ -90,7 +90,7 @@ public class RecipesController implements ContextAware {
         tagFilterCombo.getSelectionModel().selectFirst();
 
         // Load Sort Options
-        sortCombo.setItems(FXCollections.observableArrayList("Recommended", "Newest First", "Quickest", "Cheapest"));
+        sortCombo.setItems(FXCollections.observableArrayList("Newest First", "Quickest", "Cheapest", "A-Z", "Z-A"));
         sortCombo.getSelectionModel().selectFirst();
 
         // Load recipes and apply search pipeline
@@ -292,10 +292,21 @@ public class RecipesController implements ContextAware {
 
         // 5. Sorting Pipeline
         String selectedSort = sortCombo.getValue();
-        if ("Quickest".equals(selectedSort)) {
-            filteredList = searchService.sortByPrepTime(filteredList);
-        } else if ("Cheapest".equals(selectedSort)) {
-            filteredList = searchService.sortByPrice(filteredList);
+        
+        // If there are active fridge ingredients, sort primarily by match percentage (descending)
+        if (!fridgeIngredients.isEmpty()) {
+            filteredList.sort((a, b) -> {
+                double matchA = getMatchPercentage(a);
+                double matchB = getMatchPercentage(b);
+                if (Math.abs(matchA - matchB) > 0.0001) {
+                    return Double.compare(matchB, matchA); // Descending by match percentage
+                }
+                // Tie-breaker: choose the one with the quickest total time (per proposal)
+                return Integer.compare(a.getTotalTime(), b.getTotalTime());
+            });
+        } else {
+            // Standard sorting when no fridge ingredients are selected
+            filteredList = sortRecipesByCriteria(filteredList, selectedSort);
         }
 
         // Render Cards
@@ -307,6 +318,66 @@ public class RecipesController implements ContextAware {
             statusLabel.setText("No recipes match your criteria.");
         } else {
             statusLabel.setText("");
+        }
+    }
+
+    private double getMatchPercentage(Recipe recipe) {
+        int totalIngs = recipe.getIngredients().size();
+        if (totalIngs == 0) return 0.0;
+        
+        List<String> activeIngredients = new ArrayList<>(fridgeIngredients);
+        if (globalSearchQuery != null && !globalSearchQuery.trim().isEmpty()) {
+            activeIngredients.addAll(
+                Arrays.stream(globalSearchQuery.trim().split("[\\s,]+"))
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .filter(s -> !s.isEmpty())
+                    .toList()
+            );
+        }
+        
+        if (activeIngredients.isEmpty()) return 0.0;
+        
+        int matchCount = 0;
+        for (Ingredient ing : recipe.getIngredients()) {
+            for (String activeIng : activeIngredients) {
+                if (ing.getName().toLowerCase().contains(activeIng.toLowerCase()) || 
+                    activeIng.toLowerCase().contains(ing.getName().toLowerCase())) {
+                    matchCount++;
+                    break;
+                }
+            }
+        }
+        return (double) matchCount / totalIngs;
+    }
+
+    private int compareRecipesByCriteria(Recipe a, Recipe b, String criteria) {
+        if ("Quickest".equals(criteria)) {
+            return Integer.compare(a.getTotalTime(), b.getTotalTime());
+        } else if ("Cheapest".equals(criteria)) {
+            return Double.compare(a.getTotalPrice(), b.getTotalPrice());
+        } else if ("A-Z".equals(criteria)) {
+            return a.getTitle().compareToIgnoreCase(b.getTitle());
+        } else if ("Z-A".equals(criteria)) {
+            return b.getTitle().compareToIgnoreCase(a.getTitle());
+        } else {
+            return Integer.compare(b.getRecipeId(), a.getRecipeId());
+        }
+    }
+
+    private List<Recipe> sortRecipesByCriteria(List<Recipe> list, String criteria) {
+        List<Recipe> sorted = new ArrayList<>(list);
+        if ("Quickest".equals(criteria)) {
+            return searchService.sortByPrepTime(sorted);
+        } else if ("Cheapest".equals(criteria)) {
+            return searchService.sortByPrice(sorted);
+        } else if ("A-Z".equals(criteria)) {
+            return searchService.sortAlphabeticalAZ(sorted);
+        } else if ("Z-A".equals(criteria)) {
+            return searchService.sortAlphabeticalZA(sorted);
+        } else {
+            sorted.sort((a, b) -> Integer.compare(b.getRecipeId(), a.getRecipeId()));
+            return sorted;
         }
     }
 
@@ -427,7 +498,15 @@ public class RecipesController implements ContextAware {
             com.vinrecipe.dao.ShoppingListDAO shoppingListDAO = new com.vinrecipe.dao.ShoppingListDAO();
             int roomId = getUserRoomId(currentUser);
             int listId = shoppingListDAO.getOrCreateListId(roomId, currentUser.getUserId());
-            List<Recipe> existing = shoppingListDAO.getSelectedRecipes(listId, recipeService);
+            
+            // Query the current active plan date for this shopping list, fallback to today if null
+            String activeDate = shoppingListDAO.getPlanDate(listId);
+            if (activeDate == null || activeDate.trim().isEmpty()) {
+                activeDate = java.time.LocalDate.now().toString();
+                shoppingListDAO.updatePlanDate(listId, activeDate);
+            }
+            
+            List<Recipe> existing = shoppingListDAO.getSelectedRecipesByDate(listId, activeDate, recipeService);
             boolean alreadyIn = existing.stream().anyMatch(r -> r.getRecipeId() == recipe.getRecipeId());
             if (!alreadyIn) {
                 List<Integer> ids = new ArrayList<>();
@@ -435,7 +514,7 @@ public class RecipesController implements ContextAware {
                     ids.add(r.getRecipeId());
                 }
                 ids.add(recipe.getRecipeId());
-                shoppingListDAO.saveSelectedRecipes(listId, ids);
+                shoppingListDAO.saveSelectedRecipesByDate(listId, activeDate, ids);
                 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, 
                     recipe.getTitle() + " has been added to your shopping list!", ButtonType.OK);
